@@ -1,4 +1,4 @@
-from dataset import VisdaDataset
+from dataset import LegacyVisdaDataset
 from pathlib import Path
 from .transformations import contrast_transforms
 from .util import create_samples
@@ -14,7 +14,7 @@ args = parser.parse_args()
 
 if args.action == "finetune":
     storage_path = Path(args.storage)
-    train_dataset = VisdaDataset((storage_path/'train').resolve(), transform=contrast_transforms)
+    train_dataset = LegacyVisdaDataset((storage_path/'train').resolve(), transform=contrast_transforms)
     train_dataset.set_params()
 
     create_samples(train_dataset, Path(args.transform_sample_directory))

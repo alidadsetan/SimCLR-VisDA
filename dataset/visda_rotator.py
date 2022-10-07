@@ -41,7 +41,7 @@ class VisdaManager(object):
     return self._path_dict.flatten(keys)
 
   def get_label(self, index):
-    return self._path_dict.id_to_target[index]
+    return self._path_dict.id_to_targets[index]
 
   # def next_image(self, image_path, rot=1, light_rot=0):
   #   directory, src, object_id, cam_yaw, light_yaw, _ = self._extract_params(image_path)

@@ -22,7 +22,7 @@ class MultiLevelDict(object):
           self.id_to_adress.append(keys[:3])
           self.id_to_targets.append(target)
       where = where[key]
-    where[keys[-1]] = value 
+    where[keys[-1]] = value
 
   def get(self, keys):
     result = self._root
@@ -37,10 +37,14 @@ class MultiLevelDict(object):
     return _flatten(root)
 
 a = MultiLevelDict()
-a.add(['ali', 'a'], 1)
-a.add(['ali', 'b'], 2)
-a.add(['al', 'i'], 3)
+a.add(['ali', 'a'], 1, 'target0')
+a.add(['ali', 'b'], 2, 'target1')
+a.add(['al', 'i'], 3, 'target2')
 assert a.get(['ali', 'a']) == 1
 assert a.get(['ali', 'b']) == 2
 assert a.get(['al', 'i']) == 3
 assert a.flatten([]) == [1,2,3]
+a.add(['a', 'l', 'i', ' ', 'd'], 173, 'target3')
+assert a.id_to_adress[0] == ['a', 'l', 'i']
+assert a.id_to_targets[0] == 'target3'
+assert a.flatten(['a', 'l', 'i']) == [173]

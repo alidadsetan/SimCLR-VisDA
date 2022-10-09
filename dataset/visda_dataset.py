@@ -73,4 +73,3 @@ class VisdaTrainDataset(object):
 #         target = self.target_transform(target)
 
 #     return sample_list, target
-

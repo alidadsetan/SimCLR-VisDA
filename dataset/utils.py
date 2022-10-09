@@ -1,4 +1,5 @@
 from typing import Dict
+
 def _flatten(X):
   if isinstance(X, Dict):
     result = []
@@ -7,7 +8,7 @@ def _flatten(X):
     return result
   return [X]
 
-class MultiLevelDict(object):
+class MultiLevelDict(object):                                            
   def __init__(self):
     self._root = {}
     self.id_to_adress = []
@@ -37,6 +38,7 @@ class MultiLevelDict(object):
     return _flatten(root)
 
 a = MultiLevelDict()
+
 a.add(['ali', 'a'], 1, 'target0')
 a.add(['ali', 'b'], 2, 'target1')
 a.add(['al', 'i'], 3, 'target2')

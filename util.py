@@ -1,4 +1,4 @@
-from random import random
+import random
 import torch
 import torchvision
 import matplotlib.pyplot as plt
@@ -14,6 +14,8 @@ def create_samples(data,save_directory, num_samples=6):
     plt.title('Augmented image examples of the visdas dataset')
     plt.imshow(img_grid)
     plt.axis('off')
+
+    save_directory.mkdir(parents=True, exist_ok=True)
 
     plt.savefig(save_directory/"sample.png")
     plt.close()

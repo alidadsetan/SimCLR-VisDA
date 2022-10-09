@@ -1,1 +1,1 @@
-from .visda_dataset import LegacyVisdaDataset
+from .visda_dataset import VisdaDataset, VisdaTrainDataset

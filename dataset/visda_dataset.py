@@ -1,7 +1,6 @@
 from pathlib import Path
-from torchvision import datasets
-from torchvision.datasets.folder import default_loader
-from random import random
+from torchvision.datasets.folder import default_loader, ImageFolder
+import random
 from .visda_rotator import VisdaManager
 
 class VisdaDataset(object): 
@@ -23,8 +22,29 @@ class VisdaDataset(object):
     return self.valid[index - len(self.train) * self.train_repetition]
 
 
+class VisdaValidDataset(ImageFolder):
+  def set_param(self, n_views: int) -> None: 
+    self.n_views = n_views
+
+  def __getitem__(self, index):
+    path, target = self.samples[index]
+    loaded = self.loader(path)
+
+    result = []
+    if self.transform is not None:
+      result = [self.transform(loaded) for _ in range(self.n_views)]
+
+    targets = []
+    if self.target_transform is not None:
+      targets = [self.target_transform(target) for _ in range(self.n_views)]
+    else:
+      targets = [target for _ in range(self.n_views)]
+
+    return result, targets
+
 class VisdaTrainDataset(object):
   def __init__(self, root: Path, transform=None, n_views=5):
+    self.root = root
     self.visda_manager = VisdaManager(root)
     self.transform = transform
     self.n_views = n_views

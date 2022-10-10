@@ -13,7 +13,7 @@ Python 3.9.14
 
 
 ### Cloning repo, Downloading and extracting dataset
-TODO
+*TODO*: download tar files, extract, ...
 
 ### Installing dependencies
 ```

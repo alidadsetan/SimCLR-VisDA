@@ -1,26 +1,67 @@
 from pathlib import Path
-
-from dataset.visda_dataset import VisdaDataset, VisdaTrainDataset, VisdaValidDataset
-from transformations import contrast_valid_transforms, contrast_train_transforms
+from SimCLR import SimCLR
+from dataset.visda_dataset import VisdaUnsupervisedDataset, VisdaTrainDataset, VisdaValidDataset
+from transformations import transform_builder
 from util import create_samples
+from evaluation_callback import SSLOnlineEvaluator
+from torchvision.datasets.folder import ImageFolder
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import TQDMProgressBar
+from torch.utils.data import DataLoader
+import pytorch_lightning as pl
+
 
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--action", choices=["finetune"])
+parser.add_argument("--action", choices=["pretrain", "finetune"])
 parser.add_argument("--storage", help="location for dataset")
 parser.add_argument("--transform-sample-directory", default=str(Path(".")/"transform_sample"))
+parser.add_argument("--checkpoint-directory", default=str((Path(".")/"checkpoints").resolve()))
+parser.add_argument("--finetune-full-labels-every-n-epoch", type=int,default=50)
+parser.add_argument("--finetune-ten-percent-every-n-epoch", type=int,default=1)
+parser.add_argument("--image-height", type=int,default=96)
+parser.add_argument("--pretrain-epoches", type=int, default=100)
+parser.add_argument("--pretrain-batch-size", type=int, default=1024)
 
 args = parser.parse_args()
 
-if args.action == "finetune":
+if args.action == "pretrain":
     storage_path = Path(args.storage)
-    train_dataset = VisdaTrainDataset((storage_path/'train').resolve(), transform=contrast_train_transforms,n_views=5)
 
-    valid_dataset = VisdaValidDataset((storage_path/'validation').resolve(), transform=contrast_valid_transforms)
-    valid_dataset.set_param(5)
+    transforms = transform_builder(args.image_height)
 
-    unsupervised_dataset = VisdaDataset(train_dataset,valid_dataset)
+    train_dataset = VisdaTrainDataset((storage_path/'train').resolve(), transform=transforms["contrast_train_transforms"],n_views=2)
 
+    valid_dataset = VisdaValidDataset((storage_path/'validation').resolve(), transform=transforms["contrast_valid_transforms"], n_views=2)
+
+    unsupervised_dataset = VisdaUnsupervisedDataset(train_dataset,valid_dataset)
 
     create_samples(unsupervised_dataset, Path(args.transform_sample_directory))
+
+    linear_train_data = ImageFolder((storage_path/"train").resolve(),transform=transforms["linear_transform"])
+    print("train class to id", linear_train_data.class_to_idx)
+    linear_validation_data = ImageFolder((storage_path/"validation").resolve(),transform=transforms["linear_transform"])
+    print("valid class to id", linear_validation_data.class_to_idx)
+
+    linear_seperablity_metric = SSLOnlineEvaluator(
+        train_loader=linear_train_data,
+        validation_loader=linear_validation_data,
+        finetune_full_labels_every_n_epoch=args.finetune_full_labels_every_n_epoch,
+        finetune_first_ten_percent_every_n_epoch=args.finetune_ten_percent_every_n_epoch,
+        num_classes=len(linear_train_data.classes)
+    )
+    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory,save_top_k=10,monitor="adaptation_acc_epoch_end")
+    progress_bar = TQDMProgressBar()
+
+    callbacks = [linear_seperablity_metric,checkpoint,progress_bar]
+
+    train_dataloader = DataLoader(unsupervised_dataset, args.pretrain_batch_size)
+    model = SimCLR(args.pretrain_batch_size,len(train_dataloader))
+
+    trainer = pl.Trainer(callbacks=callbacks,gpus=1)
+    trainer.fit(model, train_dataloader=train_dataloader)
+    # callbacks: save model (weights and biases?). linear seperablity metric. progress bar (weights and biases?).
+if args.action == 'finetune':
+    pass
+    # should load from checkpoint, finetune on 10% or all

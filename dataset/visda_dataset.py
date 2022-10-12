@@ -3,12 +3,12 @@ from torchvision.datasets.folder import default_loader, ImageFolder
 import random
 from .visda_rotator import VisdaManager
 
-class VisdaDataset(object): 
+class VisdaUnsupervisedDataset(object): 
   '''
   Combines train and vali datasets. but because train dataset is so small, 
   it will repeat the train dataset, train_repetition times.
   '''
-  def __init__(self, train_dataset, valid_dataset, train_repetition=10):
+  def __init__(self, train_dataset, valid_dataset, train_repetition=15):
     self.train = train_dataset
     self.valid = valid_dataset
     self.train_repetition = train_repetition
@@ -23,6 +23,14 @@ class VisdaDataset(object):
 
 
 class VisdaValidDataset(ImageFolder):
+  def __init__(self, *args, **kwargs):
+    if 'n_views' in kwargs:
+      n_views = kwargs.pop('n_views')
+    else:
+      n_views = args.pop()
+    super().__init__(*args,**kwargs)
+    self.n_views = n_views 
+
   def set_param(self, n_views: int) -> None: 
     self.n_views = n_views
 
@@ -43,7 +51,7 @@ class VisdaValidDataset(ImageFolder):
     return result, targets
 
 class VisdaTrainDataset(object):
-  def __init__(self, root: Path, transform=None, n_views=5):
+  def __init__(self, root: Path, transform=None, n_views=2):
     self.root = root
     self.visda_manager = VisdaManager(root)
     self.transform = transform

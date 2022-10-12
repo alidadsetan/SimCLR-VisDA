@@ -16,30 +16,40 @@ class RandomColorize(object):
             return colorize(grayscale(sample),black=random_color,white=(255,255,255))
         return sample
 
-contrast_valid_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                          transforms.RandomResizedCrop(size=96,scale=(.25,.5)),
-                                          transforms.RandomApply([
-                                              transforms.ColorJitter(brightness=0.8, 
-                                                                     contrast=0.8, 
-                                                                     saturation=0.5, 
-                                                                     hue=0.2)
-                                          ], p=0.8),
-                                          transforms.RandomGrayscale(p=0.2),
-                                          transforms.GaussianBlur(kernel_size=9),
-                                          transforms.ToTensor(),
-                                          transforms.Normalize((0.5,), (0.5,))
-                                         ])
 
-contrast_train_transforms = transforms.Compose([transforms.RandomHorizontalFlip(),
-                                          transforms.RandomResizedCrop(size=96,scale=(.25,.5)),
-                                          RandomColorize(.8),
-                                          transforms.RandomApply([
-                                              transforms.ColorJitter(brightness=0.8, 
-                                                                     contrast=0.8, 
-                                                                     saturation=0.5, 
-                                                                     hue=0.2)
-                                          ], p=0.8),
-                                          transforms.GaussianBlur(kernel_size=3),
-                                          transforms.ToTensor(),
-                                          transforms.Normalize((0.5,), (0.5,))
-                                         ])
+
+
+def transform_builder(input_height):
+    return ({
+        "linear_transform": transforms.Compose([
+            transforms.Resize(input_height),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ]),
+        "contrast_train_transforms": transforms.Compose([transforms.RandomHorizontalFlip(),
+            transforms.RandomResizedCrop(size=input_height,scale=(.25,.5)),
+            RandomColorize(.8),
+            transforms.RandomApply([
+                transforms.ColorJitter(brightness=0.8, 
+                                        contrast=0.8, 
+                                        saturation=0.5, 
+                                        hue=0.2)
+            ], p=0.8),
+            transforms.GaussianBlur(kernel_size=3),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ]),
+        "contrast_valid_transforms": transforms.Compose([transforms.RandomHorizontalFlip(),
+            transforms.RandomResizedCrop(size=input_height,scale=(.25,.5)),
+            transforms.RandomApply([
+                transforms.ColorJitter(brightness=0.8, 
+                                        contrast=0.8, 
+                                        saturation=0.5, 
+                                        hue=0.2)
+            ], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.GaussianBlur(kernel_size=9),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ])
+    })

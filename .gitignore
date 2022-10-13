@@ -132,3 +132,4 @@ dmypy.json
 transform_sample
 checkpoints
 logs
+wandb

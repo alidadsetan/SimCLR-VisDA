@@ -1,13 +1,15 @@
 import pytorch_lightning as pl
 import torch
 # from pl_bolts.models.self_supervised.resnets import resnet50_bn
-from torchvision.models import resnet50,ResNet50_Weights
-from pl_bolts.optimizers import LARSWrapper
+from torchvision.models import resnet50, ResNet50_Weights
+from pl_bolts.optimizers.lars import LARS
+
 from torch.optim import Adam
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch import nn
 from pl_bolts.models.self_supervised.evaluator import Flatten
 from torch.nn import functional as F
+
 
 class Projection(nn.Module):
     def __init__(self, input_dim=2048, hidden_dim=2048, output_dim=128):
@@ -28,6 +30,7 @@ class Projection(nn.Module):
         x = self.model(x)
         return F.normalize(x, dim=1)
 
+
 def nt_xent_loss(out_1, out_2, temperature):
     out = torch.cat([out_1, out_2], dim=0)
     n_samples = len(out)
@@ -45,6 +48,7 @@ def nt_xent_loss(out_1, out_2, temperature):
 
     loss = -torch.log(pos / neg).mean()
     return loss
+
 
 class SimCLR(pl.LightningModule):
     def __init__(self,
@@ -103,7 +107,12 @@ class SimCLR(pl.LightningModule):
             weight_decay=self.hparams.opt_weight_decay
         )
 
-        optimizer = LARSWrapper(Adam(parameters, lr=self.hparams.lr))
+        optimizer = LARS(
+            parameters,
+            lr=self.hparams.lr,
+            momentum=0.9,
+            weight_decay=1e-6,
+            trust_coefficient=0.001)
 
         # Trick 2 (after each step)
         self.hparams.warmup_epochs = self.hparams.warmup_epochs * self.train_iters_per_epoch

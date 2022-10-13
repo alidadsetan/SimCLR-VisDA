@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
-from wsgiref import validate
 
 import torch
 from pytorch_lightning import Callback, LightningModule, Trainer
@@ -134,12 +133,20 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
             self.online_evaluator.load_state_dict(self._recovered_callback_state["state_dict"])
             self.optimizer.load_state_dict(self._recovered_callback_state["optimizer_state"])
 
-        for _ in range(self.epochs):
+        for i in range(self.epochs):
+            if i == self.epochs - 1:
+                train_accs = []
             for batch in t_loader:
-                _, mlp_loss = self.shared_step(pl_module, batch)
+                train_acc, mlp_loss = self.shared_step(pl_module, batch)
+                if i == self.epochs - 1:
+                    train_accs.append({"acc": train_acc, "num": (batch[1].shape)[0]})
                 mlp_loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
+            if i == self.epochs - 1:
+                epoch_train_acc = sum([x["acc"] * x["num"] for x in train_accs])/sum([x["num"] for x in train_accs])
+                pl_module.log("linear_train_acc", epoch_train_acc)
+
 
         val_accs = []
         for batch in self.validation_loader:

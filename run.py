@@ -53,7 +53,7 @@ if args.action == "pretrain":
         finetune_first_ten_percent_every_n_epoch=args.finetune_ten_percent_every_n_epoch,
         num_classes=len(linear_train_data.classes)
     )
-    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory,save_top_k=10,monitor="adaptation_acc_epoch_end")
+    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory,save_top_k=10,monitor="adaptation_acc_epoch_end", filename='{epoch}-{adaptation_acc_epoch_end:.2f}-{linear_train_acc:.2f}')
     progress_bar = TQDMProgressBar()
 
     callbacks = [linear_seperablity_metric,checkpoint,progress_bar]

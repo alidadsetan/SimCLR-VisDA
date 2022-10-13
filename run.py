@@ -9,6 +9,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks import TQDMProgressBar
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
+from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
 
 import argparse
@@ -23,6 +24,7 @@ parser.add_argument("--finetune-ten-percent-every-n-epoch", type=int,default=1)
 parser.add_argument("--image-height", type=int,default=96)
 parser.add_argument("--pretrain-epoches", type=int, default=100)
 parser.add_argument("--pretrain-batch-size", type=int, default=1024)
+parser.add_argument("--log-directory", type=str, default=(Path('.')/"logs").resolve())
 
 args = parser.parse_args()
 
@@ -59,7 +61,9 @@ if args.action == "pretrain":
     train_dataloader = DataLoader(unsupervised_dataset, args.pretrain_batch_size)
     model = SimCLR(args.pretrain_batch_size,len(train_dataloader))
 
-    trainer = pl.Trainer(callbacks=callbacks,gpus=1)
+    tensor_logger_path = Path(args.log_directory)/'tensorboard'
+    wandb_logger_path = Path(args.log_directory)/'wandb'
+    trainer = pl.Trainer(callbacks=callbacks,gpus=1, logger=[TensorBoardLogger(save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path)])
     trainer.fit(model, train_dataloader=train_dataloader)
     # callbacks: save model (weights and biases?). linear seperablity metric. progress bar (weights and biases?).
 if args.action == 'finetune':

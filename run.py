@@ -34,6 +34,7 @@ parser.add_argument("--finetune-small-epochs", type=int, default=10)
 parser.add_argument("--finetune-small-batchsize", type=int, default=256)
 parser.add_argument("--finetune-batchsize", type=int, default=256)
 parser.add_argument("--finetune-epochs", type=int, default=100)
+parser.add_argument("--save-top-k-models", type=int, default=10)
 
 
 args = parser.parse_args()
@@ -51,30 +52,26 @@ if args.action == "pretrain":
 
     unsupervised_dataset = VisdaUnsupervisedDataset(
         train_dataset, valid_dataset)
-    # unsupervised_dataset = random_split(unsupervised_dataset, [4000,len(unsupervised_dataset)-4000])[0]
 
-    # create_samples(unsupervised_dataset, Path(args.transform_sample_directory))
+    create_samples(unsupervised_dataset, Path(args.transform_sample_directory))
 
     linear_train_data = ImageFolder(
         (storage_path/"train").resolve(), transform=transforms["linear_transform"])
-    print("train class to id", linear_train_data.class_to_idx)
     linear_validation_data = ImageFolder(
         (storage_path/"validation").resolve(), transform=transforms["linear_transform"])
-    # linear_validation_data = ImageFolder((storage_path/"train").resolve(),transform=transforms["linear_transform"])
-    print("valid class to id", linear_validation_data.class_to_idx)
 
     linear_seperablity_metric = SSLOnlineEvaluator(
         train_dataset=linear_train_data,
         valid_dataset=linear_validation_data,
-        finetune_full_labels_every_n_epoch=args.finetune_full_labels_every_n_epoch,
-        finetune_first_ten_percent_every_n_epoch=args.finetune_ten_percent_every_n_epoch,
+        finetune_full_every_n_epoch=args.finetune_full_labels_every_n_epoch,
+        finetune_one_percent_every_n_epoch=args.finetune_ten_percent_every_n_epoch,
         num_classes=len(linear_train_data.classes),
         batch_size=args.finetune_batchsize,
         small_batch_size=args.finetune_small_batchsize,
         epochs=args.finetune_epochs,
         small_epochs=args.finetune_small_epochs
     )
-    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=10, monitor="adaptation_acc_epoch_end",
+    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=args.save_top_k_models, monitor="adaptation_acc_epoch_end",
                                  filename='{epoch}-{adaptation_acc_epoch_end:.2f}-{linear_train_acc:.2f}')
     progress_bar = TQDMProgressBar()
 
@@ -82,12 +79,13 @@ if args.action == "pretrain":
 
     train_dataloader = DataLoader(
         unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
-    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=11)
+    # is the max_epoch argument necessary?
+    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=args.pretrain_epochs)
 
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
-    # wandb_logger_path = Path(args.log_directory)/'wandb'
+    wandb_logger_path = Path(args.log_directory)/'wandb'
     trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=1, logger=[TensorBoardLogger(
-        save_dir=tensor_logger_path), WandbLogger(project="SimCLR-VisDA")], max_epochs=11)
+        save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.pretrain_epochs)
     trainer.fit(model, train_dataloaders=train_dataloader)
     # callbacks: save model (weights and biases?). linear seperablity metric. progress bar (weights and biases?).
 if args.action == 'finetune':

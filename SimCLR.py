@@ -52,7 +52,7 @@ class SimCLR(pl.LightningModule):
     def __init__(self,
                  batch_size,
                  num_samples,
-                 warmup_epochs=0,
+                 warmup_epochs=10,
                  lr=1e-4,
                  opt_weight_decay=1e-6,
                  loss_temperature=0.5,
@@ -137,8 +137,6 @@ class SimCLR(pl.LightningModule):
             x = x[0]
 
         result = self.encoder(x)
-        if isinstance(result, list):
-            result = result[-1]
         return result
 
     def training_step(self, batch, batch_idx):
@@ -160,19 +158,13 @@ class SimCLR(pl.LightningModule):
 
         # ENCODE
         # encode -> representations
-        # (b, 3, 32, 32) -> (b, 2048, 2, 2)
+        # (b, 3, 32, 32) -> (b, 2048)
         h1 = self.encoder(img1)
         h2 = self.encoder(img2)
 
-        # print("h1 type: {}, shape: {}".format(type(h1), h1.shape, len(h1)))
-        # the bolts resnets return a list of feature maps
-        # if isinstance(h1, list):
-        #     h1 = h1[-1]
-        #     h2 = h2[-1]
-
         # PROJECT
         # img -> E -> h -> || -> z
-        # (b, 2048, 2, 2) -> (b, 128)
+        # (b, 2048) -> (b, 128)
         z1 = self.projection(h1)
         z2 = self.projection(h2)
 

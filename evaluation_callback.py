@@ -152,7 +152,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
             if i == epochs - 1:
                 epoch_train_acc = sum([x["acc"] * x["num"] for x in train_accs]) / \
                     sum([x["num"] for x in train_accs])
-                pl_module.log("linear_train_acc", epoch_train_acc)
+                pl_module.log("linear_train_acc_{}".format(tag), epoch_train_acc)
 
         val_accs = []
         for batch in self.validation_loader:
@@ -167,7 +167,6 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         x, y = batch
         x = x.to(device)
         y = y.to(device)
-
         return x, y
 
     def shared_step(

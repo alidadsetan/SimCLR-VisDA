@@ -19,8 +19,6 @@ class Projection(nn.Module):
         self.hidden_dim = hidden_dim
 
         self.model = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            Flatten(),
             nn.Linear(self.input_dim, self.hidden_dim, bias=True),
             nn.BatchNorm1d(self.hidden_dim),
             nn.ReLU(),
@@ -54,7 +52,7 @@ class SimCLR(pl.LightningModule):
     def __init__(self,
                  batch_size,
                  num_samples,
-                 warmup_epochs=10,
+                 warmup_epochs=0,
                  lr=1e-4,
                  opt_weight_decay=1e-6,
                  loss_temperature=0.5,
@@ -146,16 +144,16 @@ class SimCLR(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         loss = self.shared_step(batch, batch_idx)
 
-        result = pl.TrainResult(minimize=loss)
-        result.log('train_loss', loss, on_epoch=True)
-        return result
+        # result = pl.TrainResult(minimize=loss)
+        self.log('train_loss', loss, on_epoch=True)
+        return loss
 
     def validation_step(self, batch, batch_idx):
         loss = self.shared_step(batch, batch_idx)
 
-        result = pl.EvalResult(checkpoint_on=loss)
-        result.log('avg_val_loss', loss)
-        return result
+        # result = pl.EvalResult(checkpoint_on=loss)
+        self.log('avg_val_loss', loss)
+        return loss
 
     def shared_step(self, batch, batch_idx):
         (img1, img2), y = batch
@@ -166,10 +164,11 @@ class SimCLR(pl.LightningModule):
         h1 = self.encoder(img1)
         h2 = self.encoder(img2)
 
+        # print("h1 type: {}, shape: {}".format(type(h1), h1.shape, len(h1)))
         # the bolts resnets return a list of feature maps
-        if isinstance(h1, list):
-            h1 = h1[-1]
-            h2 = h2[-1]
+        # if isinstance(h1, list):
+        #     h1 = h1[-1]
+        #     h2 = h2[-1]
 
         # PROJECT
         # img -> E -> h -> || -> z

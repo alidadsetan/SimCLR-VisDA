@@ -16,13 +16,10 @@ class RandomColorize(object):
             return colorize(grayscale(sample),black=random_color,white=(255,255,255))
         return sample
 
-
-
-
 def transform_builder(input_height):
     return ({
         "linear_transform": transforms.Compose([
-            transforms.Resize(input_height),
+            transforms.RandomResizedCrop(size=input_height,scale=(.25,.5)),
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
         ]),

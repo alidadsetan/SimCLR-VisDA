@@ -7,7 +7,7 @@ from evaluation_callback import SSLOnlineEvaluator
 from torchvision.datasets.folder import ImageFolder
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks import TQDMProgressBar
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
@@ -17,17 +17,22 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--action", choices=["pretrain", "finetune"])
 parser.add_argument("--storage", help="location for dataset")
-parser.add_argument("--transform-sample-directory", default=str(Path(".")/"transform_sample"))
-parser.add_argument("--checkpoint-directory", default=str((Path(".")/"checkpoints").resolve()))
-parser.add_argument("--finetune-full-labels-every-n-epoch", type=int,default=20)
-parser.add_argument("--finetune-ten-percent-every-n-epoch", type=int,default=5)
-parser.add_argument("--image-height", type=int,default=96)
+parser.add_argument("--transform-sample-directory",
+                    default=str(Path(".")/"transform_sample"))
+parser.add_argument("--checkpoint-directory",
+                    default=str((Path(".")/"checkpoints").resolve()))
+parser.add_argument("--finetune-full-labels-every-n-epoch",
+                    type=int, default=20)
+parser.add_argument("--finetune-ten-percent-every-n-epoch",
+                    type=int, default=1)
+parser.add_argument("--image-height", type=int, default=96)
 parser.add_argument("--pretrain-epochs", type=int, default=100)
-parser.add_argument("--pretrain-batch-size", type=int, default=1024)
-parser.add_argument("--log-directory", type=str, default=(Path('.')/"logs").resolve())
+parser.add_argument("--pretrain-batch-size", type=int, default=256)
+parser.add_argument("--log-directory", type=str,
+                    default=(Path('.')/"logs").resolve())
 parser.add_argument("--finetune-small-epochs", type=int, default=10)
-parser.add_argument("--finetune-small-batchsize", type=int, default=2048)
-parser.add_argument("--finetune-batchsize", type=int, default=1024)
+parser.add_argument("--finetune-small-batchsize", type=int, default=256)
+parser.add_argument("--finetune-batchsize", type=int, default=256)
 parser.add_argument("--finetune-epochs", type=int, default=100)
 
 
@@ -38,18 +43,24 @@ if args.action == "pretrain":
 
     transforms = transform_builder(args.image_height)
 
-    train_dataset = VisdaTrainDataset((storage_path/'train').resolve(), transform=transforms["contrast_train_transforms"],n_views=2)
+    train_dataset = VisdaTrainDataset(
+        (storage_path/'train').resolve(), transform=transforms["contrast_train_transforms"], n_views=2)
 
-    valid_dataset = VisdaValidDataset((storage_path/'validation').resolve(), transform=transforms["contrast_valid_transforms"], n_views=2)
+    valid_dataset = VisdaValidDataset((storage_path/'validation').resolve(
+    ), transform=transforms["contrast_valid_transforms"], n_views=2)
 
-    unsupervised_dataset = VisdaUnsupervisedDataset(train_dataset,valid_dataset)
+    unsupervised_dataset = VisdaUnsupervisedDataset(
+        train_dataset, valid_dataset)
+    # unsupervised_dataset = random_split(unsupervised_dataset, [4000,len(unsupervised_dataset)-4000])[0]
 
-    create_samples(unsupervised_dataset, Path(args.transform_sample_directory))
+    # create_samples(unsupervised_dataset, Path(args.transform_sample_directory))
 
-    linear_train_data = ImageFolder((storage_path/"train").resolve(),transform=transforms["linear_transform"])
+    linear_train_data = ImageFolder(
+        (storage_path/"train").resolve(), transform=transforms["linear_transform"])
     print("train class to id", linear_train_data.class_to_idx)
-    # linear_validation_data = ImageFolder((storage_path/"validation").resolve(),transform=transforms["linear_transform"])
-    linear_validation_data = ImageFolder((storage_path/"train").resolve(),transform=transforms["linear_transform"])
+    linear_validation_data = ImageFolder(
+        (storage_path/"validation").resolve(), transform=transforms["linear_transform"])
+    # linear_validation_data = ImageFolder((storage_path/"train").resolve(),transform=transforms["linear_transform"])
     print("valid class to id", linear_validation_data.class_to_idx)
 
     linear_seperablity_metric = SSLOnlineEvaluator(
@@ -63,17 +74,20 @@ if args.action == "pretrain":
         epochs=args.finetune_epochs,
         small_epochs=args.finetune_small_epochs
     )
-    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory,save_top_k=10,monitor="adaptation_acc_epoch_end", filename='{epoch}-{adaptation_acc_epoch_end:.2f}-{linear_train_acc:.2f}')
+    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=10, monitor="adaptation_acc_epoch_end",
+                                 filename='{epoch}-{adaptation_acc_epoch_end:.2f}-{linear_train_acc:.2f}')
     progress_bar = TQDMProgressBar()
 
-    callbacks = [linear_seperablity_metric,checkpoint,progress_bar]
+    callbacks = [linear_seperablity_metric, checkpoint, progress_bar]
 
-    train_dataloader = DataLoader(unsupervised_dataset, args.pretrain_batch_size)
-    model = SimCLR(args.pretrain_batch_size,len(train_dataloader))
+    train_dataloader = DataLoader(
+        unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
+    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=11)
 
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     # wandb_logger_path = Path(args.log_directory)/'wandb'
-    trainer = pl.Trainer(callbacks=callbacks,accelerator="gpu",devices=1, logger=[TensorBoardLogger(save_dir=tensor_logger_path), WandbLogger(project="SimCLR-VisDA")],max_epochs=args.pretrain_epochs)
+    trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=1, logger=[TensorBoardLogger(
+        save_dir=tensor_logger_path), WandbLogger(project="SimCLR-VisDA")], max_epochs=11)
     trainer.fit(model, train_dataloaders=train_dataloader)
     # callbacks: save model (weights and biases?). linear seperablity metric. progress bar (weights and biases?).
 if args.action == 'finetune':

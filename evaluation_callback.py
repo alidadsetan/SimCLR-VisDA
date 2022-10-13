@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
-
 import torch
 from pytorch_lightning import Callback, LightningModule, Trainer
 from pytorch_lightning.utilities import rank_zero_warn
@@ -9,9 +8,7 @@ from torch.utils.data import random_split, DataLoader
 from torch.nn import functional as F
 from torch.optim import Optimizer
 from torchmetrics.functional import accuracy
-
 from pl_bolts.models.self_supervised.evaluator import SSLEvaluator
-
 
 class SSLOnlineEvaluator(Callback):  # pragma: no cover
     """Attaches a MLP for fine-tuning using the standard self-supervised protocol.
@@ -79,6 +76,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
 
         self.full_train_loader = DataLoader(
             train_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
+            
         self.validation_loader = DataLoader(
             valid_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
 
@@ -96,8 +94,9 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
             trainer, pl_module, "epoch_end", t_loader, epochs)
 
     def on_fit_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
-        self._compute_adaptation_loss(
-            trainer, pl_module, "fit_start", self.ten_percent_train_loader, self.small_epochs)
+        # self._compute_adaptation_loss(
+        #     trainer, pl_module, "fit_start", self.ten_percent_train_loader, self.small_epochs)
+        pass
 
     def _compute_adaptation_loss(self, trainer: Trainer, pl_module: LightningModule, source: str, t_loader: DataLoader, epochs: int) -> None:
         # must move to device after setup, as during setup, pl_module is still on cpu
@@ -170,7 +169,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
 
         val_acc = sum([x["acc"] * x["num"] for x in val_accs]) / \
             sum([x["num"] for x in val_accs])
-        # pl_module.log("adaptation_acc_{}".format(source), val_acc)
+        pl_module.log("adaptation_acc_{}".format(source), val_acc)
         print("adaptation_acc_{}".format(source), val_acc)
 
     def to_device(self, batch: Sequence, device: Union[str, torch.device]) -> Tuple[Tensor, Tensor]:
@@ -239,7 +238,6 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
 
     def on_load_checkpoint(self, trainer: Trainer, pl_module: LightningModule, callback_state: Dict[str, Any]) -> None:
         self._recovered_callback_state = callback_state
-
 
 @contextmanager
 def set_training(module: nn.Module, mode: bool):

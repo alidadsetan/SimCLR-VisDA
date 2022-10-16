@@ -35,6 +35,7 @@ parser.add_argument("--finetune-small-batchsize", type=int, default=256)
 parser.add_argument("--finetune-batchsize", type=int, default=256)
 parser.add_argument("--finetune-epochs", type=int, default=100)
 parser.add_argument("--save-top-k-models", type=int, default=10)
+parser.add_argument("--save-models-every-n-epoch", type=int, default=1)
 
 
 args = parser.parse_args()
@@ -71,7 +72,7 @@ if args.action == "pretrain":
         epochs=args.finetune_epochs,
         small_epochs=args.finetune_small_epochs
     )
-    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=args.save_top_k_models, monitor="adaptation_acc_epoch_end",
+    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=args.save_top_k_models, every_n_epochs=args.save_models_every_n_epoch,monitor="adaptation_acc_epoch_end",
                                  filename='{epoch}-{adaptation_acc_epoch_end:.2f}-{linear_train_acc:.2f}')
     progress_bar = TQDMProgressBar()
 

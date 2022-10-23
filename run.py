@@ -7,7 +7,7 @@ from evaluation_callback import SSLOnlineEvaluator
 from torchvision.datasets.folder import ImageFolder
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks import TQDMProgressBar
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
@@ -81,7 +81,7 @@ if args.action == "pretrain":
     train_dataloader = DataLoader(
         unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
     # is the max_epoch argument necessary?
-    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=args.pretrain_epochs,lr=0.01)
+    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=args.pretrain_epochs,lr=0.005)
 
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     wandb_logger_path = Path(args.log_directory)/'wandb'

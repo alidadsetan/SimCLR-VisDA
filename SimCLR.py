@@ -52,7 +52,7 @@ class SimCLR(pl.LightningModule):
     def __init__(self,
                  batch_size,
                  num_samples,
-                 warmup_epochs=10,
+                 warmup_epochs=0,
                  lr=1e-4,
                  opt_weight_decay=1e-6,
                  loss_temperature=0.5,

@@ -81,7 +81,7 @@ if args.action == "pretrain":
     train_dataloader = DataLoader(
         unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
     # is the max_epoch argument necessary?
-    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=args.pretrain_epochs,lr=0.005)
+    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=args.pretrain_epochs,lr=0.001)
 
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     wandb_logger_path = Path(args.log_directory)/'wandb'

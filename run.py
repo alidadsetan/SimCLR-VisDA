@@ -73,8 +73,8 @@ if args.action == "pretrain":
         epochs=args.finetune_epochs,
         small_epochs=args.finetune_small_epochs
     )
-    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=args.save_top_k_models, every_n_epochs=args.save_models_every_n_epoch,monitor="adaptation_acc_epoch_end",
-                                 filename='{epoch}-{adaptation_acc_epoch_end:.2f}-{linear_train_acc:.2f}')
+    checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=args.save_top_k_models, every_n_epochs=args.save_models_every_n_epoch,monitor="adaptation_acc_one_percent",
+                                 filename='{epoch}-{adaptation_acc_one_percent:.2f}-{linear_train_acc:.2f}',mode="max")
     progress_bar = TQDMProgressBar()
 
     callbacks = [linear_seperablity_metric, checkpoint, progress_bar]

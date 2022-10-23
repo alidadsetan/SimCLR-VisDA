@@ -1,0 +1,3 @@
+[submodule "SimCLRv2-Pytorch"]
+	path = SimCLRv2-Pytorch
+	url = git@github.com:Separius/SimCLRv2-Pytorch.git

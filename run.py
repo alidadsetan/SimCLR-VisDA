@@ -22,7 +22,7 @@ parser.add_argument("--transform-sample-directory",
 parser.add_argument("--checkpoint-directory",
                     default=str((Path(".")/"checkpoints").resolve()))
 parser.add_argument("--finetune-full-labels-every-n-epoch",
-                    type=int, default=20)
+                    type=int, default=2000)
 parser.add_argument("--finetune-ten-percent-every-n-epoch",
                     type=int, default=1)
 parser.add_argument("--image-height", type=int, default=96)

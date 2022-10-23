@@ -128,7 +128,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
                 )
 
         self.optimizer = torch.optim.Adam(
-            self.online_evaluator.parameters(), lr=1e-4)
+            self.online_evaluator.parameters(), lr=1e-3)
 
         if self._recovered_callback_state is not None:
             self.online_evaluator.load_state_dict(

@@ -27,6 +27,7 @@ parser.add_argument("--finetune-ten-percent-every-n-epoch",
                     type=int, default=1)
 parser.add_argument("--image-height", type=int, default=96)
 parser.add_argument("--pretrain-epochs", type=int, default=100)
+parser.add_argument("--pretrain-learning-rate", type=float, default=1e-4)
 parser.add_argument("--pretrain-batch-size", type=int, default=256)
 parser.add_argument("--log-directory", type=str,
                     default=(Path('.')/"logs").resolve())
@@ -81,7 +82,7 @@ if args.action == "pretrain":
     train_dataloader = DataLoader(
         unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
     # is the max_epoch argument necessary?
-    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=args.pretrain_epochs,lr=0.001)
+    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate)
 
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     wandb_logger_path = Path(args.log_directory)/'wandb'

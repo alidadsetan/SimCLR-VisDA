@@ -155,7 +155,7 @@ class SimCLR(pl.LightningModule):
         return loss
 
     def shared_step(self, batch, batch_idx):
-        (img1, img2), y = batch
+        (img1, img2), (labels,_) = batch
 
         # ENCODE
         # encode -> representations
@@ -172,7 +172,7 @@ class SimCLR(pl.LightningModule):
         z1 = self.projection(h1)
         z2 = self.projection(h2)
 
-        loss = self.nt_xent_loss(z1, z2 ,self.hparams.loss_temperature, labels=y)
+        loss = self.nt_xent_loss(z1, z2 ,self.hparams.loss_temperature, labels=labels)
 
         return loss
 

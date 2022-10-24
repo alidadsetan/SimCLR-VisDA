@@ -36,7 +36,7 @@ class SimCLR(pl.LightningModule):
                  num_samples,
                 #  weight_path,
                  keep_mlp,
-                 hight_penalty_weight,
+                 high_penalty_weight,
                  low_penalty_weight,
                  mlp_dimension=2048,
                  warmup_epochs=0,

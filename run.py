@@ -73,7 +73,7 @@ if args.action == "pretrain":
 
     model = SimCLR(args.pretrain_batch_size, len(train_dataloader),
     max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
-    keep_mlp=args.keep_mlp,hight_penalty_weight=args.hight_penalty_weight,
+    keep_mlp=args.keep_mlp,high_penalty_weight=args.hight_penalty_weight,
     low_penalty_weight=args.low_penalty_weight)
 
     linear_seperablity_metric = SSLOnlineEvaluator(

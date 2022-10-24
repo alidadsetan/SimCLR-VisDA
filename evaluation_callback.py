@@ -74,8 +74,8 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         self.one_percent_train_loader = DataLoader(random_split(train_dataset, [first_one_percent_length, len(train_dataset) - first_one_percent_length])[0],
                                                    batch_size=small_batch_size, shuffle=True, num_workers=16)
 
-        self.full_train_loader = DataLoader(
-            train_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
+        # self.full_train_loader = DataLoader(
+        #     train_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
 
         self.validation_loader = DataLoader(
             valid_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
@@ -99,7 +99,8 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         # must move to device after setup, as during setup, pl_module is still on cpu
         self.online_evaluator = SSLEvaluator(
             # output of previous
-            n_input=2048,
+            # n_input=2048,
+            n_input=128,
             n_classes=self.num_classes,
             p=self.drop_p,
             n_hidden=None,

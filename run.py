@@ -37,7 +37,7 @@ parser.add_argument("--finetune-batchsize", type=int, default=256)
 parser.add_argument("--finetune-epochs", type=int, default=100)
 parser.add_argument("--save-top-k-models", type=int, default=10)
 parser.add_argument("--save-models-every-n-epoch", type=int, default=1)
-parser.add_argument("--pretrained-weights-path", type=str)
+# parser.add_argument("--pretrained-weights-path", type=str)
 
 
 args = parser.parse_args()

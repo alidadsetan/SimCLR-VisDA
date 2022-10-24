@@ -8,7 +8,7 @@ from torch.optim import Adam
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch import nn
 # from pl_bolts.models.self_supervised.evaluator import Flatten
-from pl_bolts.models.self_supervised import SimCLR as bolts_simclr
+# from pl_bolts.models.self_supervised import SimCLR as bolts_simclr
 from torch.nn import functional as F
 
 
@@ -29,8 +29,25 @@ class Projection(nn.Module):
         x = self.model(x)
         return F.normalize(x, dim=1)
 
+def compute_neg_weights(labels, hight_penalty_weight = 10, low_penalty_weight = .1):
+    column_labels = labels.expand((len(labels)), -1)
+    row_labels = column_labels.t()
+    
+    no_label = row_labels == -1 | column_labels == -1
+    diagonal = torch.eye(len(labels)).bool()
 
-def nt_xent_loss(out_1, out_2, temperature):
+    hight_penalty = (row_labels != column_labels) & ~no_label
+    low_penalty = (row_labels == column_labels) & ~no_label 
+    regular_panalty = (no_label & ~diagonal)
+
+    quarter_result = hight_penalty_weight * hight_penalty + low_penalty_weight * low_penalty + regular_panalty
+
+    result_row_1 = torch.concat([quarter_result,quarter_result+torch.eye(len(labels))],dim=1)
+    result_row_2 = torch.concat([quarter_result+torch.eye(len(labels)), quarter_result],dim=1)
+
+    return torch.concat([result_row_1,result_row_2],dim=0)
+
+def nt_xent_loss(out_1, out_2, temperature,labels):
     out = torch.cat([out_1, out_2], dim=0)
     n_samples = len(out)
 
@@ -38,8 +55,10 @@ def nt_xent_loss(out_1, out_2, temperature):
     cov = torch.mm(out, out.t().contiguous())
     sim = torch.exp(cov / temperature)
 
-    mask = ~torch.eye(n_samples, device=sim.device).bool()
-    neg = sim.masked_select(mask).view(n_samples, -1).sum(dim=-1)
+    # mask = ~torch.eye(n_samples, device=sim.device).bool()
+    neg_weights = compute_neg_weights(labels)
+
+    neg = torch.mm(sim,neg_weights).sum(dim=-1)
 
     # Positive similarity
     pos = torch.exp(torch.sum(out_1 * out_2, dim=-1) / temperature)
@@ -72,10 +91,10 @@ class SimCLR(pl.LightningModule):
         self.save_hyperparameters()
 
         self.nt_xent_loss = nt_xent_loss
-        # self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
-        # self.encoder.fc = nn.Sequential()
-        self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
-        self.encoder.eval()
+        self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.encoder.fc = nn.Sequential()
+        # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
+        # self.encoder.eval()
 
         # h -> || -> z
         self.projection = Projection()
@@ -137,12 +156,15 @@ class SimCLR(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def forward(self, x):
-        if isinstance(x, list):
-            x = x[0]
+        # if isinstance(x, list):
+        #     x = x[0]
 
         result = self.encoder(x)
-        if isinstance(result, list):
-            result = result[-1]
+
+        # added for testing
+        result = self.projection(result)
+        # if isinstance(result, list):
+        #     result = result[-1]
         return result
 
     def training_step(self, batch, batch_idx):
@@ -177,6 +199,6 @@ class SimCLR(pl.LightningModule):
         z1 = self.projection(h1)
         z2 = self.projection(h2)
 
-        loss = self.nt_xent_loss(z1, z2, self.hparams.loss_temperature)
+        loss = self.nt_xent_loss(z1, z2 ,self.hparams.loss_temperature, labels=y)
 
         return loss

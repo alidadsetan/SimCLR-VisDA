@@ -180,7 +180,7 @@ class SimCLR(pl.LightningModule):
         column_labels = labels.expand((len(labels)), -1)
         row_labels = column_labels.t()
         
-        no_label = row_labels == -1 | column_labels == -1
+        no_label = (row_labels == -1) | (column_labels == -1)
         diagonal = torch.eye(len(labels)).bool()
 
         hight_penalty = (row_labels != column_labels) & ~no_label

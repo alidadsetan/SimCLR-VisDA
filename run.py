@@ -69,7 +69,7 @@ if args.action == "pretrain":
         (storage_path/"validation").resolve(), transform=transforms["linear_transform"])
 
     train_dataloader = DataLoader(
-        unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
+        unsupervised_dataset, args.pretrain_batch_size, num_workers=16,shuffle=True)
 
     model = SimCLR(args.pretrain_batch_size, len(train_dataloader),
     max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,

@@ -67,7 +67,7 @@ class SimCLR(pl.LightningModule):
     @property
     def encoder_dimension(self):
         if self.hparams.keep_mlp:
-            return self.projection.model[-1].out_features
+            return self.hparams.mlp_dimension
         else:
             # return self.encoder.avgpool.output_size
             return 2048

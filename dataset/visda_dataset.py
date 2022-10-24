@@ -46,7 +46,7 @@ class VisdaValidDataset(ImageFolder):
     if self.target_transform is not None:
       targets = [self.target_transform(target) for _ in range(self.n_views)]
     else:
-      targets = [target for _ in range(self.n_views)]
+      targets = [-1 for _ in range(self.n_views)]
 
     return result, targets
 

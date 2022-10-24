@@ -69,7 +69,8 @@ class SimCLR(pl.LightningModule):
         if self.hparams.keep_mlp:
             return self.projection.model[-1].out_features
         else:
-            return self.encoder.avgpool.output_size
+            # return self.encoder.avgpool.output_size
+            return 2048
 
     def exclude_from_wt_decay(self, named_params, weight_decay, skip_list=['bias', 'bn']):
         params = []

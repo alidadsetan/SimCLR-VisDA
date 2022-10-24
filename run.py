@@ -40,7 +40,7 @@ parser.add_argument("--save-models-every-n-epoch", type=int, default=1)
 
 parser.add_argument("--keep-mlp", action="store_true", default=False)
 parser.add_argument("--mlp-output-dimension", type=int, default=128)
-parser.add_argument("--hight-penalty-weight", type=float, default=10)
+parser.add_argument("--high-penalty-weight", type=float, default=10)
 parser.add_argument("--low-penalty-weight", type=float, default=.1)
 # parser.add_argument("--pretrained-weights-path", type=str)
 
@@ -73,7 +73,7 @@ if args.action == "pretrain":
 
     model = SimCLR(args.pretrain_batch_size, len(train_dataloader),
     max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
-    keep_mlp=args.keep_mlp,high_penalty_weight=args.hight_penalty_weight,
+    keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
     low_penalty_weight=args.low_penalty_weight)
 
     linear_seperablity_metric = SSLOnlineEvaluator(

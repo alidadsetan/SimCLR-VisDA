@@ -189,8 +189,8 @@ class SimCLR(pl.LightningModule):
 
         quarter_result = self.hparams.high_penalty_weight * hight_penalty + self.hparams.low_penalty_weight * low_penalty + regular_panalty
 
-        result_row_1 = torch.concat([quarter_result,quarter_result+torch.eye(len(labels))],dim=1)
-        result_row_2 = torch.concat([quarter_result+torch.eye(len(labels)), quarter_result],dim=1)
+        result_row_1 = torch.concat([quarter_result,quarter_result+torch.eye(len(labels),device=labels.device)],dim=1)
+        result_row_2 = torch.concat([quarter_result+torch.eye(len(labels),device=labels.device), quarter_result],dim=1)
 
         return torch.concat([result_row_1,result_row_2],dim=0)
 

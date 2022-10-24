@@ -7,7 +7,8 @@ from pl_bolts.optimizers.lars import LARS
 from torch.optim import Adam
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch import nn
-from pl_bolts.models.self_supervised.evaluator import Flatten
+# from pl_bolts.models.self_supervised.evaluator import Flatten
+from pl_bolts.models.self_supervised import SimCLR as bolts_simclr
 from torch.nn import functional as F
 
 
@@ -52,6 +53,7 @@ class SimCLR(pl.LightningModule):
     def __init__(self,
                  batch_size,
                  num_samples,
+                 weight_path,
                  warmup_epochs=0,
                  lr=1e-4,
                  opt_weight_decay=1e-6,
@@ -70,8 +72,10 @@ class SimCLR(pl.LightningModule):
         self.save_hyperparameters()
 
         self.nt_xent_loss = nt_xent_loss
-        self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
-        self.encoder.fc = nn.Sequential()
+        # self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
+        # self.encoder.fc = nn.Sequential()
+        self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
+        self.encoder.eval()
 
         # h -> || -> z
         self.projection = Projection()

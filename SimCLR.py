@@ -34,7 +34,7 @@ class SimCLR(pl.LightningModule):
     def __init__(self,
                  batch_size,
                  num_samples,
-                 weight_path,
+                #  weight_path,
                  keep_mlp,
                  hight_penalty_weight,
                  low_penalty_weight,

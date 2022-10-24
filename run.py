@@ -71,7 +71,10 @@ if args.action == "pretrain":
     train_dataloader = DataLoader(
         unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
 
-    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),args.pretrained_weights_path,max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,keep_mlp=args.keep_mlp,hight_penalty_weight=args.hight_penalty_weight,low_penalty_weight=args.low_penalty_weight)
+    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),
+    max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
+    keep_mlp=args.keep_mlp,hight_penalty_weight=args.hight_penalty_weight,
+    low_penalty_weight=args.low_penalty_weight)
 
     linear_seperablity_metric = SSLOnlineEvaluator(
         train_dataset=linear_train_data,

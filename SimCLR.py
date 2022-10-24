@@ -141,6 +141,8 @@ class SimCLR(pl.LightningModule):
             x = x[0]
 
         result = self.encoder(x)
+        if isinstance(result, list):
+            result = result[-1]
         return result
 
     def training_step(self, batch, batch_idx):
@@ -165,6 +167,9 @@ class SimCLR(pl.LightningModule):
         # (b, 3, 32, 32) -> (b, 2048)
         h1 = self.encoder(img1)
         h2 = self.encoder(img2)
+        if isinstance(h1,list):
+            h1 = h1[-1]
+            h2 = h2[-1]
 
         # PROJECT
         # img -> E -> h -> || -> z

@@ -37,6 +37,11 @@ parser.add_argument("--finetune-batchsize", type=int, default=256)
 parser.add_argument("--finetune-epochs", type=int, default=100)
 parser.add_argument("--save-top-k-models", type=int, default=10)
 parser.add_argument("--save-models-every-n-epoch", type=int, default=1)
+
+parser.add_argument("--keep-mlp", action="store_true", default=False)
+parser.add_argument("--mlp-output-dimension", type=int, default=128)
+parser.add_argument("--hight-penalty-weight", type=float, default=10)
+parser.add_argument("--low-penalty-weight", type=float, default=.1)
 # parser.add_argument("--pretrained-weights-path", type=str)
 
 
@@ -63,6 +68,11 @@ if args.action == "pretrain":
     linear_validation_data = ImageFolder(
         (storage_path/"validation").resolve(), transform=transforms["linear_transform"])
 
+    train_dataloader = DataLoader(
+        unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
+
+    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),args.pretrained_weights_path,max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,hight_penalty_weight=args.hight_penalty_weight,low_penalty_weight=args.low_penalty_weight)
+
     linear_seperablity_metric = SSLOnlineEvaluator(
         train_dataset=linear_train_data,
         valid_dataset=linear_validation_data,
@@ -72,18 +82,17 @@ if args.action == "pretrain":
         batch_size=args.finetune_batchsize,
         small_batch_size=args.finetune_small_batchsize,
         epochs=args.finetune_epochs,
-        small_epochs=args.finetune_small_epochs
+        small_epochs=args.finetune_small_epochs,
+        encoder_dimension= model.encoder_dimension
     )
+
     checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=args.save_top_k_models, every_n_epochs=args.save_models_every_n_epoch,monitor="adaptation_acc_one_percent",
                                  filename='{epoch}-{adaptation_acc_one_percent:.2f}-{linear_train_acc:.2f}',mode="max")
     progress_bar = TQDMProgressBar()
 
     callbacks = [linear_seperablity_metric, checkpoint, progress_bar]
 
-    train_dataloader = DataLoader(
-        unsupervised_dataset, args.pretrain_batch_size, num_workers=16)
     # is the max_epoch argument necessary?
-    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),args.pretrained_weights_path,max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate)
 
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     wandb_logger_path = Path(args.log_directory)/'wandb'

@@ -38,6 +38,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         finetune_one_percent_every_n_epoch: int,
         batch_size: int,
         small_batch_size: int,
+        encoder_dimension: int = 2048,
         epochs=100,
         small_epochs=10,
         drop_p: float = 0.2,
@@ -74,6 +75,8 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         self.one_percent_train_loader = DataLoader(random_split(train_dataset, [first_one_percent_length, len(train_dataset) - first_one_percent_length])[0],
                                                    batch_size=small_batch_size, shuffle=True, num_workers=16)
 
+        self.encoder_dimension = encoder_dimension
+
         # self.full_train_loader = DataLoader(
         #     train_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
 
@@ -100,7 +103,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         self.online_evaluator = SSLEvaluator(
             # output of previous
             # n_input=2048,
-            n_input=128,
+            n_input=self.encoder_dimension,
             n_classes=self.num_classes,
             p=self.drop_p,
             n_hidden=None,

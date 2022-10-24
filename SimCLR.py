@@ -29,50 +29,16 @@ class Projection(nn.Module):
         x = self.model(x)
         return F.normalize(x, dim=1)
 
-def compute_neg_weights(labels, hight_penalty_weight = 10, low_penalty_weight = .1):
-    column_labels = labels.expand((len(labels)), -1)
-    row_labels = column_labels.t()
-    
-    no_label = row_labels == -1 | column_labels == -1
-    diagonal = torch.eye(len(labels)).bool()
-
-    hight_penalty = (row_labels != column_labels) & ~no_label
-    low_penalty = (row_labels == column_labels) & ~no_label 
-    regular_panalty = (no_label & ~diagonal)
-
-    quarter_result = hight_penalty_weight * hight_penalty + low_penalty_weight * low_penalty + regular_panalty
-
-    result_row_1 = torch.concat([quarter_result,quarter_result+torch.eye(len(labels))],dim=1)
-    result_row_2 = torch.concat([quarter_result+torch.eye(len(labels)), quarter_result],dim=1)
-
-    return torch.concat([result_row_1,result_row_2],dim=0)
-
-def nt_xent_loss(out_1, out_2, temperature,labels):
-    out = torch.cat([out_1, out_2], dim=0)
-    n_samples = len(out)
-
-    # Full similarity matrix
-    cov = torch.mm(out, out.t().contiguous())
-    sim = torch.exp(cov / temperature)
-
-    # mask = ~torch.eye(n_samples, device=sim.device).bool()
-    neg_weights = compute_neg_weights(labels)
-
-    neg = torch.mm(sim,neg_weights).sum(dim=-1)
-
-    # Positive similarity
-    pos = torch.exp(torch.sum(out_1 * out_2, dim=-1) / temperature)
-    pos = torch.cat([pos, pos], dim=0)
-
-    loss = -torch.log(pos / neg).mean()
-    return loss
-
 
 class SimCLR(pl.LightningModule):
     def __init__(self,
                  batch_size,
                  num_samples,
                  weight_path,
+                 keep_mlp,
+                 hight_penalty_weight,
+                 low_penalty_weight,
+                 mlp_dimension=2048,
                  warmup_epochs=0,
                  lr=1e-4,
                  opt_weight_decay=1e-6,
@@ -89,15 +55,21 @@ class SimCLR(pl.LightningModule):
         """
         super().__init__()
         self.save_hyperparameters()
-
-        self.nt_xent_loss = nt_xent_loss
         self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
         self.encoder.fc = nn.Sequential()
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
         # self.encoder.eval()
 
+
         # h -> || -> z
-        self.projection = Projection()
+        self.projection = Projection(output_dim=mlp_dimension)
+
+    @property
+    def encoder_dimension(self):
+        if self.hparams.keep_mlp:
+            return self.projection.model[-1].out_features
+        else:
+            return self.encoder.avgpool.output_size
 
     def exclude_from_wt_decay(self, named_params, weight_decay, skip_list=['bias', 'bn']):
         params = []
@@ -162,7 +134,8 @@ class SimCLR(pl.LightningModule):
         result = self.encoder(x)
 
         # added for testing
-        result = self.projection(result)
+        if self.hparams.keep_mlp:
+            result = self.projection(result)
         # if isinstance(result, list):
         #     result = result[-1]
         return result
@@ -201,4 +174,41 @@ class SimCLR(pl.LightningModule):
 
         loss = self.nt_xent_loss(z1, z2 ,self.hparams.loss_temperature, labels=y)
 
+        return loss
+
+    def compute_neg_weights(self,labels):
+        column_labels = labels.expand((len(labels)), -1)
+        row_labels = column_labels.t()
+        
+        no_label = row_labels == -1 | column_labels == -1
+        diagonal = torch.eye(len(labels)).bool()
+
+        hight_penalty = (row_labels != column_labels) & ~no_label
+        low_penalty = (row_labels == column_labels) & ~no_label 
+        regular_panalty = (no_label & ~diagonal)
+
+        quarter_result = self.hparams.high_penalty_weight * hight_penalty + self.hparams.low_penalty_weight * low_penalty + regular_panalty
+
+        result_row_1 = torch.concat([quarter_result,quarter_result+torch.eye(len(labels))],dim=1)
+        result_row_2 = torch.concat([quarter_result+torch.eye(len(labels)), quarter_result],dim=1)
+
+        return torch.concat([result_row_1,result_row_2],dim=0)
+
+    def nt_xent_loss(self,out_1, out_2, temperature,labels):
+        out = torch.cat([out_1, out_2], dim=0)
+
+        # Full similarity matrix
+        cov = torch.mm(out, out.t().contiguous())
+        sim = torch.exp(cov / temperature)
+
+        # mask = ~torch.eye(n_samples, device=sim.device).bool()
+        neg_weights = self.compute_neg_weights(labels)
+
+        neg = torch.mm(neg_weights,sim).sum(dim=-1)
+
+        # Positive similarity
+        pos = torch.exp(torch.sum(out_1 * out_2, dim=-1) / temperature)
+        pos = torch.cat([pos, pos], dim=0)
+
+        loss = -torch.log(pos / neg).mean()
         return loss

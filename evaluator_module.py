@@ -27,10 +27,11 @@ class Evaluator(pl.LightningModule):
         self.log('evaluation_batch_training_acc', acc)
         return loss
     
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx, dataloader_index):
         loss, acc = self.shared_step(batch)
-        self.log('evaluation_batch_validation_loss', loss)
-        self.log('evaluation_batch_validation_acc', acc)
+        dataloader_name = "same_dist" if dataloader_index == 0 else "out_of_dist"
+        self.log('evaluation_batch_validation_loss_{}'.format(dataloader_name), loss)
+        self.log('evaluation_batch_validation_acc_{}'.format(dataloader_name), acc)
         return loss
 
     def configure_optimizers(self):

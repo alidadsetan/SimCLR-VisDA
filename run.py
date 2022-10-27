@@ -3,6 +3,7 @@ from SimCLR import SimCLR
 from dataset.visda_dataset import VisdaUnsupervisedDataset, VisdaTrainDataset, VisdaValidDataset
 from transformations import transform_builder
 from util import create_samples
+from torch.utils.data import random_split
 from evaluation_callback import SSLOnlineEvaluator
 from torchvision.datasets.folder import ImageFolder
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -112,11 +113,16 @@ if args.action == 'evaluate':
     linear_train_data = ImageFolder(
         (storage_path/"train").resolve(), transform=transforms["linear_transform"])
 
+    len_same_dist_val = len(linear_train_data) // 20
+    same_dist_val_dataset, linear_train_data = random_split(linear_train_data, [len_same_dist_val, len(linear_train_data) - len_same_dist_val])
+
+    same_dist_val_dataloader = DataLoader(same_dist_val_dataset, args.finetune_batchsize, num_workers=16)
+
     linear_validation_data = ImageFolder(
         (storage_path/"validation").resolve(), transform=transforms["linear_transform"])
 
     train_dataloader = DataLoader(linear_train_data,args.finetune_batchsize,num_workers=16,shuffle=True)
-    valid_dataloader = DataLoader(linear_validation_data,args.finetune_batchsize,num_workers=16,shuffle=True)
+    other_dist_valid_dataloader = DataLoader(linear_validation_data,args.finetune_batchsize,num_workers=16)
 
     # simclr = SimCLR(args.pretrain_batch_size, len(train_dataloader),
     #     max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
@@ -140,4 +146,4 @@ if args.action == 'evaluate':
     trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=1, logger=[TensorBoardLogger(
         save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.finetune_epochs)
 
-    trainer.fit(model, train_dataloader, valid_dataloader)
+    trainer.fit(model, train_dataloader, [other_dist_valid_dataloader, same_dis])

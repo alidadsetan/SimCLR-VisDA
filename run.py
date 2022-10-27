@@ -123,7 +123,7 @@ if args.action == 'evaluate':
     #     keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
     #     low_penalty_weight=args.low_penalty_weight)
 
-    simclr = SimCLR.load_from_checkpoint(args.pretrained_weights_path)
+    simclr = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve())
     simclr.train(False)
 
     model = Evaluator(simclr,n_classes=len(linear_train_data.classes),n_hidden=args.pretrained_hidden_dim)

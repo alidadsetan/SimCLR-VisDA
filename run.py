@@ -145,6 +145,8 @@ if args.action == 'evaluate':
     wandb_logger_path = Path(args.log_directory)/'wandb'
 
     trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=1, logger=[TensorBoardLogger(
-        save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.finetune_epochs)
+        save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.finetune_epochs,
+        # TODO: move this to argparse
+        log_every_n_steps=10)
 
     trainer.fit(model, train_dataloader, [other_dist_valid_dataloader, same_dist_val_dataloader])

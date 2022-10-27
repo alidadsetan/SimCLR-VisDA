@@ -147,4 +147,4 @@ if args.action == 'evaluate':
     trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=1, logger=[TensorBoardLogger(
         save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.finetune_epochs)
 
-    trainer.fit(model, train_dataloader, [other_dist_valid_dataloader, same_dis])
+    trainer.fit(model, train_dataloader, [other_dist_valid_dataloader, same_dist_val_dataloader])

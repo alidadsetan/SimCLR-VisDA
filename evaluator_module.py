@@ -36,5 +36,5 @@ class Evaluator(pl.LightningModule):
 
     def configure_optimizers(self):
         # TODO: add to argparse
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer

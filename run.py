@@ -11,11 +11,11 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
-
 import argparse
+from evaluator_module import Evaluator
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--action", choices=["pretrain", "finetune"])
+parser.add_argument("--action", choices=["pretrain", "evaluate"])
 parser.add_argument("--storage", help="location for dataset")
 parser.add_argument("--transform-sample-directory",
                     default=str(Path(".")/"transform_sample"))
@@ -33,7 +33,7 @@ parser.add_argument("--log-directory", type=str,
                     default=(Path('.')/"logs").resolve())
 parser.add_argument("--finetune-small-epochs", type=int, default=10)
 parser.add_argument("--finetune-small-batchsize", type=int, default=256)
-parser.add_argument("--finetune-batchsize", type=int, default=256)
+parser.add_argument("--finetune-batchsize", type=int, default=2048)
 parser.add_argument("--finetune-epochs", type=int, default=100)
 parser.add_argument("--save-top-k-models", type=int, default=10)
 parser.add_argument("--save-models-every-n-epoch", type=int, default=1)
@@ -42,7 +42,8 @@ parser.add_argument("--keep-mlp", action="store_true", default=False)
 parser.add_argument("--mlp-output-dimension", type=int, default=128)
 parser.add_argument("--high-penalty-weight", type=float, default=10)
 parser.add_argument("--low-penalty-weight", type=float, default=.1)
-# parser.add_argument("--pretrained-weights-path", type=str)
+parser.add_argument("--pretrained-weights-path", type=str)
+parser.add_argument("--pretrained-hidden-dim", type=int,default=0)
 
 
 args = parser.parse_args()
@@ -72,9 +73,9 @@ if args.action == "pretrain":
         unsupervised_dataset, args.pretrain_batch_size, num_workers=16,shuffle=True)
 
     model = SimCLR(args.pretrain_batch_size, len(train_dataloader),
-    max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
-    keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
-    low_penalty_weight=args.low_penalty_weight)
+        max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
+        keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
+        low_penalty_weight=args.low_penalty_weight)
 
     linear_seperablity_metric = SSLOnlineEvaluator(
         train_dataset=linear_train_data,
@@ -103,6 +104,40 @@ if args.action == "pretrain":
         save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.pretrain_epochs)
     trainer.fit(model, train_dataloaders=train_dataloader)
     # callbacks: save model (weights and biases?). linear seperablity metric. progress bar (weights and biases?).
-if args.action == 'finetune':
-    pass
-    # should load from checkpoint, finetune on 10% or all
+if args.action == 'evaluate':
+    storage_path = Path(args.storage)
+
+    transforms = transform_builder(args.image_height)
+
+    linear_train_data = ImageFolder(
+        (storage_path/"train").resolve(), transform=transforms["linear_transform"])
+
+    linear_validation_data = ImageFolder(
+        (storage_path/"validation").resolve(), transform=transforms["linear_transform"])
+
+    train_dataloader = DataLoader(linear_train_data,args.finetune_batchsize,num_workers=16,shuffle=True)
+    valid_dataloader = DataLoader(linear_validation_data,args.finetune_batchsize,num_workers=16,shuffle=True)
+
+    # simclr = SimCLR(args.pretrain_batch_size, len(train_dataloader),
+    #     max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
+    #     keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
+    #     low_penalty_weight=args.low_penalty_weight)
+
+    simclr = SimCLR.load_from_checkpoint(args.pretrained_weights_path)
+    simclr.train(False)
+
+    model = Evaluator(simclr,n_classes=len(linear_train_data.classes),n_hidden=args.pretrained_hidden_dim)
+
+    progress_bar = TQDMProgressBar()
+
+    callbacks = [progress_bar]
+
+    # is the max_epoch argument necessary?
+
+    tensor_logger_path = Path(args.log_directory)/'tensorboard'
+    wandb_logger_path = Path(args.log_directory)/'wandb'
+
+    trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=1, logger=[TensorBoardLogger(
+        save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.finetune_epochs)
+
+    trainer.fit(model, train_dataloaders= [train_dataloader], val_dataloaders= [valid_dataloader])

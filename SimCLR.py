@@ -185,7 +185,7 @@ class SimCLR(pl.LightningModule):
         diagonal = torch.eye(len(labels),device=labels.device).bool()
 
         hight_penalty = (row_labels != column_labels) & ~no_label
-        low_penalty = (row_labels == column_labels) & ~no_label 
+        low_penalty = (row_labels == column_labels) & ~no_label
         regular_panalty = (no_label & ~diagonal)
 
         quarter_result = self.hparams.high_penalty_weight * hight_penalty + self.hparams.low_penalty_weight * low_penalty + regular_panalty

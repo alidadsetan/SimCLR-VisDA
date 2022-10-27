@@ -28,5 +28,6 @@ class Evaluator(pl.LightningModule):
         self.log('evaluation_batch_validation_loss', loss)
 
     def configure_optimizers(self):
+        # TODO: add to argparse
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
         return optimizer

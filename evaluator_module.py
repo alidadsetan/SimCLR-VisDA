@@ -1,6 +1,7 @@
 import torch
 import pytorch_lightning as pl
 from torch.nn import functional as F
+from torchmetrics.functional import accuracy
 from pl_bolts.models.self_supervised.evaluator import SSLEvaluator
 
 class Evaluator(pl.LightningModule):
@@ -16,16 +17,21 @@ class Evaluator(pl.LightningModule):
 
         logits = self.evaluator(reps)
         loss = F.cross_entropy(logits,y)
-        return loss
+
+        acc = accuracy(logits.softmax(-1), y)
+        return loss, acc
     
     def training_step(self, batch, batch_idx):
-        loss = self.shared_step(batch)
+        loss, acc = self.shared_step(batch)
         self.log('evaluation_batch_training_loss', loss)
+        self.log('evaluation_batch_training_acc', acc)
         return loss
     
     def validation_step(self, batch, batch_idx):
-        loss = self.shared_step(batch)
+        loss, acc = self.shared_step(batch)
         self.log('evaluation_batch_validation_loss', loss)
+        self.log('evaluation_batch_validation_acc', acc)
+        return loss
 
     def configure_optimizers(self):
         # TODO: add to argparse

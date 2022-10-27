@@ -29,7 +29,7 @@ class Evaluator(pl.LightningModule):
     
     def validation_step(self, batch, batch_idx, dataloader_index):
         loss, acc = self.shared_step(batch)
-        dataloader_name = "same_dist" if dataloader_index == 0 else "out_of_dist"
+        dataloader_name = "same_dist" if dataloader_index == 'dataloader_idx_0' else "out_of_dist"
         self.log('evaluation_batch_validation_loss_{}'.format(dataloader_name), loss)
         self.log('evaluation_batch_validation_acc_{}'.format(dataloader_name), acc)
         return loss

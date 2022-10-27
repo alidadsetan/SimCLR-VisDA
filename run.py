@@ -112,6 +112,7 @@ if args.action == 'evaluate':
 
     linear_train_data = ImageFolder(
         (storage_path/"train").resolve(), transform=transforms["linear_transform"])
+    n_classes = len(linear_train_data.classes)
 
     len_same_dist_val = len(linear_train_data) // 20
     same_dist_val_dataset, linear_train_data = random_split(linear_train_data, [len_same_dist_val, len(linear_train_data) - len_same_dist_val])
@@ -132,7 +133,7 @@ if args.action == 'evaluate':
     simclr = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve())
     simclr.train(False)
 
-    model = Evaluator(simclr,n_classes=len(linear_train_data.classes),n_hidden=args.pretrained_hidden_dim)
+    model = Evaluator(simclr,n_classes=n_classes,n_hidden=args.pretrained_hidden_dim)
 
     progress_bar = TQDMProgressBar()
 

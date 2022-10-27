@@ -114,7 +114,7 @@ if args.action == 'evaluate':
         (storage_path/"train").resolve(), transform=transforms["linear_transform"])
     n_classes = len(linear_train_data.classes)
 
-    len_same_dist_val = len(linear_train_data) // 20
+    len_same_dist_val = 99 * len(linear_train_data) // 100
     same_dist_val_dataset, linear_train_data = random_split(linear_train_data, [len_same_dist_val, len(linear_train_data) - len_same_dist_val])
 
     same_dist_val_dataloader = DataLoader(same_dist_val_dataset, args.finetune_batchsize, num_workers=16)
@@ -149,4 +149,4 @@ if args.action == 'evaluate':
         # TODO: move this to argparse
         log_every_n_steps=10)
 
-    trainer.fit(model, train_dataloader, [other_dist_valid_dataloader, same_dist_val_dataloader])
+    trainer.fit(model, train_dataloader, other_dist_valid_dataloader) #, same_dist_val_dataloader])

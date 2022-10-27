@@ -44,7 +44,7 @@ parser.add_argument("--mlp-output-dimension", type=int, default=128)
 parser.add_argument("--high-penalty-weight", type=float, default=10)
 parser.add_argument("--low-penalty-weight", type=float, default=.1)
 parser.add_argument("--pretrained-weights-path", type=str)
-parser.add_argument("--pretrained-hidden-dim", type=int,default=0)
+parser.add_argument("--evaluator-hidden-dim", type=int,default=0)
 
 
 args = parser.parse_args()
@@ -133,7 +133,7 @@ if args.action == 'evaluate':
     simclr = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve())
     simclr.train(False)
 
-    model = Evaluator(simclr,n_classes=n_classes,n_hidden=args.pretrained_hidden_dim)
+    model = Evaluator(simclr,n_classes=n_classes,n_hidden=args.evaluator_hidden_dim)
 
     progress_bar = TQDMProgressBar()
 

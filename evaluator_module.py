@@ -18,12 +18,12 @@ class Evaluator(pl.LightningModule):
         loss = F.cross_entropy(logits,y)
         return loss
     
-    def training_step(self, batch):
+    def training_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
         self.log('evaluation_batch_training_loss', loss)
         return loss
     
-    def validation_step(self, batch):
+    def validation_step(self, batch, batch_idx):
         loss = self.shared_step(batch)
         self.log('evaluation_batch_validation_loss', loss)
 

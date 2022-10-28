@@ -160,6 +160,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         val_accs = []
         for batch in self.validation_loader:
             val_acc, mlp_loss = self.shared_step(pl_module, batch)
+            pl_module.log("linear_valid_batch_acc", val_acc)
             val_accs.append({"acc": val_acc, "num": (batch[1].shape)[0]})
 
         val_acc = sum([x["acc"] * x["num"] for x in val_accs]) / \

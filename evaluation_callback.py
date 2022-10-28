@@ -169,8 +169,8 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
 
     def to_device(self, batch: Sequence, device: Union[str, torch.device]) -> Tuple[Tensor, Tensor]:
         x, y = batch
-        # x = x.to(device)
-        # y = y.to(device)
+        x = x.to(device)
+        y = y.to(device)
         return x, y
 
     def shared_step(

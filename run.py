@@ -52,7 +52,7 @@ parser.add_argument("--num-gpus", type=int,default=1)
 args = parser.parse_args()
 
 if args.action == "pretrain":
-    freeze_support()
+    # freeze_support()
     storage_path = Path(args.storage)
 
     transforms = transform_builder(args.image_height)
@@ -108,7 +108,8 @@ if args.action == "pretrain":
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     wandb_logger_path = Path(args.log_directory)/'wandb'
     trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=args.num_gpus, logger=[TensorBoardLogger(
-        save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.pretrain_epochs)
+        save_dir=tensor_logger_path)]#, WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")]
+        , max_epochs=args.pretrain_epochs)
     trainer.fit(model, train_dataloaders=train_dataloader)
     # callbacks: save model (weights and biases?). linear seperablity metric. progress bar (weights and biases?).
 if args.action == 'evaluate':

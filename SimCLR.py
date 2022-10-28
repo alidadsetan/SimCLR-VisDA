@@ -53,6 +53,7 @@ class SimCLR(pl.LightningModule):
             opt_weight_decay: the optimizer weight decay
             loss_temperature: the loss temperature
         """
+        print(kwargs.max_epochs, warmup_epochs, num_samples,"simclr")
         super().__init__()
         self.save_hyperparameters()
         self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)

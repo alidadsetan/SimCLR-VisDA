@@ -80,8 +80,8 @@ if args.action == "pretrain":
     #     model = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,max_epochs=args.pretrain_epochs,warmup_epochs=0)
     # else:
     print(len(train_dataloader))
-    model = SimCLR(args.pretrain_batch_size, len(train_dataloader),
-        max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
+    model = SimCLR(args.pretrain_batch_size, len(train_dataloader)*args.pretrain_batch_size,
+        lr=args.pretrain_learning_rate,
         keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
         low_penalty_weight=args.low_penalty_weight)
 

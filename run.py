@@ -44,7 +44,7 @@ parser.add_argument("--keep-mlp", action="store_true", default=False)
 parser.add_argument("--mlp-output-dimension", type=int, default=128)
 parser.add_argument("--high-penalty-weight", type=float, default=10)
 parser.add_argument("--low-penalty-weight", type=float, default=.1)
-parser.add_argument("--pretrained-weights-path", type=str)
+parser.add_argument("--pretrained-weights-path", type=str,required=False)
 parser.add_argument("--evaluator-hidden-dim", type=int,default=0)
 parser.add_argument("--num-gpus", type=int,default=1)
 

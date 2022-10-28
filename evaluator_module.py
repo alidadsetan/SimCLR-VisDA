@@ -34,6 +34,6 @@ class Evaluator(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        # TODO: add to argparse
+        # TODO: add lr to argparse
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer

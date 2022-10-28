@@ -145,7 +145,6 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
                 train_accs = []
             for batch in t_loader:
                 train_acc, mlp_loss = self.shared_step(pl_module, batch)
-                print("linear_train_batch_acc", train_acc)
                 pl_module.log("linear_train_batch_acc", train_acc)
                 if i == epochs - 1:
                     train_accs.append(

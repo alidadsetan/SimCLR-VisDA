@@ -5,7 +5,7 @@ from torchmetrics.functional import accuracy
 from pl_bolts.models.self_supervised.evaluator import SSLEvaluator
 
 class Evaluator(pl.LightningModule):
-    def __init__(self, sim_clr,n_classes,n_hidden: int,drop_p=.1):
+    def __init__(self, sim_clr,n_classes,n_hidden: int,drop_p=.2):
         super().__init__()
         self.sim_clr = sim_clr # .to(device)? .train(False)? inference? 
         self.evaluator = SSLEvaluator(n_input=self.sim_clr.encoder_dimension,n_classes=n_classes,p=drop_p,n_hidden=None if n_hidden == 0 else n_hidden)

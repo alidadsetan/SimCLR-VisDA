@@ -1,3 +1,4 @@
+from multiprocessing import freeze_support
 from pathlib import Path
 from SimCLR import SimCLR
 from dataset.visda_dataset import VisdaUnsupervisedDataset, VisdaTrainDataset, VisdaValidDataset
@@ -51,6 +52,7 @@ parser.add_argument("--num-gpus", type=int,default=1)
 args = parser.parse_args()
 
 if args.action == "pretrain":
+    freeze_support()
     storage_path = Path(args.storage)
 
     transforms = transform_builder(args.image_height)

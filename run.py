@@ -28,7 +28,7 @@ parser.add_argument("--finetune-full-labels-every-n-epoch",
 parser.add_argument("--finetune-ten-percent-every-n-epoch",
                     type=int, default=1)
 parser.add_argument("--image-height", type=int, default=96)
-parser.add_argument("--pretrain-epochs", type=int, default=100)
+parser.add_argument("--pretrain-epochs", type=int, default=2000)
 parser.add_argument("--pretrain-learning-rate", type=float, default=1e-4)
 parser.add_argument("--pretrain-batch-size", type=int, default=256)
 parser.add_argument("--log-directory", type=str,

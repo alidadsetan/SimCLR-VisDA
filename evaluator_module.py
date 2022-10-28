@@ -23,14 +23,14 @@ class Evaluator(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         loss, acc = self.shared_step(batch)
-        self.log('evaluation_batch_training_loss', loss)
-        self.log('evaluation_batch_training_acc', acc)
+        self.log('evaluation_batch_training_loss', loss, sync_dist=True)
+        self.log('evaluation_batch_training_acc', acc, sync_dist=True)
         return loss
     
     def validation_step(self, batch, batch_idx): #, dataloader_index):
         loss, acc = self.shared_step(batch)
-        self.log('evaluation_batch_validation_loss', loss)
-        self.log('evaluation_batch_validation_acc', acc)
+        self.log('evaluation_batch_validation_loss', loss, sync_dist=True)
+        self.log('evaluation_batch_validation_acc', acc, sync_dist=True)
         return loss
 
     def configure_optimizers(self):

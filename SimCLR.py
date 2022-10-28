@@ -143,14 +143,14 @@ class SimCLR(pl.LightningModule):
         loss = self.shared_step(batch, batch_idx)
 
         # result = pl.TrainResult(minimize=loss)
-        self.log('train_loss', loss, on_epoch=True)
+        self.log('train_loss', loss, on_epoch=True, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss = self.shared_step(batch, batch_idx)
 
         # result = pl.EvalResult(checkpoint_on=loss)
-        self.log('avg_val_loss', loss)
+        self.log('avg_val_loss', loss, sync_dist=True)
         return loss
 
     def shared_step(self, batch, batch_idx):

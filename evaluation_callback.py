@@ -145,7 +145,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
                 train_accs = []
             for batch in t_loader:
                 train_acc, mlp_loss = self.shared_step(pl_module, batch)
-                pl_module.log("linear_train_batch_acc", train_acc)
+                pl_module.log("linear_train_batch_acc", train_acc, sync_dist=True)
                 if i == epochs - 1:
                     train_accs.append(
                         {"acc": train_acc, "num": (batch[1].shape)[0]})
@@ -155,22 +155,22 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
             if i == epochs - 1:
                 epoch_train_acc = sum([x["acc"] * x["num"] for x in train_accs]) / \
                     sum([x["num"] for x in train_accs])
-                pl_module.log("linear_train_acc_{}".format(tag), epoch_train_acc)
+                pl_module.log("linear_train_acc_{}".format(tag), epoch_train_acc, sync_dist=True)
 
         val_accs = []
         for batch in self.validation_loader:
             val_acc, mlp_loss = self.shared_step(pl_module, batch)
-            pl_module.log("linear_valid_batch_acc", val_acc)
+            pl_module.log("linear_valid_batch_acc", val_acc, sync_dist=True)
             val_accs.append({"acc": val_acc, "num": (batch[1].shape)[0]})
 
         val_acc = sum([x["acc"] * x["num"] for x in val_accs]) / \
             sum([x["num"] for x in val_accs])
-        pl_module.log("adaptation_acc_{}".format(tag), val_acc)
+        pl_module.log("adaptation_acc_{}".format(tag), val_acc, sync_dist=True)
 
     def to_device(self, batch: Sequence, device: Union[str, torch.device]) -> Tuple[Tensor, Tensor]:
         x, y = batch
-        x = x.to(device)
-        y = y.to(device)
+        # x = x.to(device)
+        # y = y.to(device)
         return x, y
 
     def shared_step(

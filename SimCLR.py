@@ -58,8 +58,6 @@ class SimCLR(pl.LightningModule):
         self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
         self.encoder.fc = nn.Sequential()
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
-        # self.encoder.eval()
-
 
         # h -> || -> z
         self.projection = Projection(output_dim=mlp_dimension)

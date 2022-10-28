@@ -58,8 +58,6 @@ class SimCLR(pl.LightningModule):
         self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
         self.encoder.fc = nn.Sequential()
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
-        # self.encoder.eval()
-
 
         # h -> || -> z
         self.projection = Projection(output_dim=mlp_dimension)
@@ -185,7 +183,7 @@ class SimCLR(pl.LightningModule):
         diagonal = torch.eye(len(labels),device=labels.device).bool()
 
         hight_penalty = (row_labels != column_labels) & ~no_label
-        low_penalty = (row_labels == column_labels) & ~no_label 
+        low_penalty = (row_labels == column_labels) & ~no_label
         regular_panalty = (no_label & ~diagonal)
 
         quarter_result = self.hparams.high_penalty_weight * hight_penalty + self.hparams.low_penalty_weight * low_penalty + regular_panalty

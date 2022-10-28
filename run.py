@@ -45,6 +45,7 @@ parser.add_argument("--high-penalty-weight", type=float, default=10)
 parser.add_argument("--low-penalty-weight", type=float, default=.1)
 parser.add_argument("--pretrained-weights-path", type=str)
 parser.add_argument("--evaluator-hidden-dim", type=int,default=0)
+parser.add_argument("--num-gpus", type=int,default=1)
 
 
 args = parser.parse_args()
@@ -147,7 +148,7 @@ if args.action == 'evaluate':
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     wandb_logger_path = Path(args.log_directory)/'wandb'
 
-    trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=1, logger=[TensorBoardLogger(
+    trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=args.num_gpus, logger=[TensorBoardLogger(
         save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.finetune_epochs,
         # TODO: move this to argparse
         log_every_n_steps=1)

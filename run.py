@@ -48,6 +48,7 @@ parser.add_argument("--num-gpus", type=int,default=1)
 
 parser.add_argument("--evaluation-same-dist-val-percentage", type=int,default=5)
 parser.add_argument("--evaluation-train-percentage", type=int,default=95)
+parser.add_argument("--drop-p", type=float, default=.5)
 
 argcomplete.autocomplete(parser)
 args = parser.parse_args()
@@ -135,7 +136,7 @@ if args.action == 'evaluate':
     simclr = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,warmup_epochs=0,num_samples=len(train_dataloader))
     simclr.train(False)
 
-    model = Evaluator(simclr,n_classes=n_classes,n_hidden=args.evaluator_hidden_dim)
+    model = Evaluator(simclr,n_classes=n_classes,n_hidden=args.evaluator_hidden_dim,drop_p=args.drop_p)
 
     progress_bar = TQDMProgressBar()
 

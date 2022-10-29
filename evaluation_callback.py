@@ -34,15 +34,13 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         self,
         train_dataset,
         valid_dataset,
-        finetune_full_every_n_epoch: int,
-        finetune_one_percent_every_n_epoch: int,
+        finetune_every_n_epoch: int,
         batch_size: int,
-        small_batch_size: int,
         encoder_dimension: int = 2048,
-        epochs=100,
-        small_epochs=10,
+        epochs=10,
         drop_p: float = 0.2,
         num_classes: Optional[int] = None,
+        finetune_percentage = 1
     ):
         """
         Args:
@@ -63,17 +61,15 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         self.valid_dataset = valid_dataset
 
         self._recovered_callback_state: Optional[Dict[str, Any]] = None
-        self.epochs = epochs
-        self.small_epochs = small_epochs
+        self.small_epochs = epochs
 
         self.completed_epoches = 0
-        self.finetune_full_every_n_epoch = finetune_full_every_n_epoch
-        self.finetune_one_percent_every_n_epoch = finetune_one_percent_every_n_epoch
+        self.finetune_every_n_epoch = finetune_every_n_epoch
 
-        first_one_percent_length = len(train_dataset)//100
+        finetune_lentgh = finetune_percentage * len(train_dataset)//100
 
-        self.one_percent_train_loader = DataLoader(random_split(train_dataset, [first_one_percent_length, len(train_dataset) - first_one_percent_length])[0],
-                                                   batch_size=small_batch_size, shuffle=True, num_workers=16)
+        self.train_loader = DataLoader(random_split(train_dataset, [finetune_lentgh, len(train_dataset) - finetune_lentgh])[0],
+                                                   batch_size=batch_size, shuffle=True, num_workers=16)
 
         self.encoder_dimension = encoder_dimension
 
@@ -85,12 +81,8 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
 
     def on_train_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         self.completed_epoches += 1
-        if self.completed_epoches % self.finetune_full_every_n_epoch == 0:
-            t_loader = self.full_train_loader
-            epochs = self.epochs
-            tag = "full"
-        elif self.completed_epoches % self.finetune_one_percent_every_n_epoch == 0:
-            t_loader = self.one_percent_train_loader
+        if self.completed_epoches % self.finetune_every_n_epoch == 0:
+            t_loader = self.train_loader
             epochs = self.small_epochs
             tag = "one_percent"
         else:

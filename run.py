@@ -1,4 +1,3 @@
-from multiprocessing import freeze_support
 from pathlib import Path
 from SimCLR import SimCLR
 from dataset.visda_dataset import VisdaUnsupervisedDataset, VisdaTrainDataset, VisdaValidDataset
@@ -23,20 +22,18 @@ parser.add_argument("--transform-sample-directory",
                     default=str(Path(".")/"transform_sample"))
 parser.add_argument("--checkpoint-directory",
                     default=str((Path(".")/"checkpoints").resolve()))
-parser.add_argument("--finetune-full-labels-every-n-epoch",
-                    type=int, default=2000)
-parser.add_argument("--finetune-ten-percent-every-n-epoch",
+parser.add_argument("--finetune-every-n-epoch",
                     type=int, default=1)
-parser.add_argument("--image-height", type=int, default=96)
+parser.add_argument("--image-height", type=int, default=224)
 parser.add_argument("--pretrain-epochs", type=int, default=2000)
 parser.add_argument("--pretrain-learning-rate", type=float, default=1e-4)
 parser.add_argument("--pretrain-batch-size", type=int, default=256)
+parser.add_argument("--pretrain-finetune-precentage", type=int, default=1)
 parser.add_argument("--log-directory", type=str,
                     default=(Path('.')/"logs").resolve())
-parser.add_argument("--finetune-small-epochs", type=int, default=10)
-parser.add_argument("--finetune-small-batchsize", type=int, default=256)
-parser.add_argument("--finetune-batchsize", type=int, default=2048)
-parser.add_argument("--finetune-epochs", type=int, default=100)
+parser.add_argument("--finetune-batchsize", type=int, default=256)
+parser.add_argument("--finetune-epochs", type=int, default=10)
+parser.add_argument("--finetune-percentage", type=int, default=1)
 parser.add_argument("--save-top-k-models", type=int, default=10)
 parser.add_argument("--save-models-every-n-epoch", type=int, default=1)
 
@@ -47,6 +44,10 @@ parser.add_argument("--low-penalty-weight", type=float, default=.1)
 parser.add_argument("--pretrained-weights-path", type=str,required=False)
 parser.add_argument("--evaluator-hidden-dim", type=int,default=0)
 parser.add_argument("--num-gpus", type=int,default=1)
+
+
+parser.add_argument("--evaluation-same-dist-val-percentage", type=int,default=5)
+parser.add_argument("--evaluation-train-percentage", type=int,default=95)
 
 
 args = parser.parse_args()
@@ -87,14 +88,12 @@ if args.action == "pretrain":
     linear_seperablity_metric = SSLOnlineEvaluator(
         train_dataset=linear_train_data,
         valid_dataset=linear_validation_data,
-        finetune_full_every_n_epoch=args.finetune_full_labels_every_n_epoch,
-        finetune_one_percent_every_n_epoch=args.finetune_ten_percent_every_n_epoch,
+        finetune_every_n_epoch=args.finetune_every_n_epoch,
         num_classes=len(linear_train_data.classes),
         batch_size=args.finetune_batchsize,
-        small_batch_size=args.finetune_small_batchsize,
         epochs=args.finetune_epochs,
-        small_epochs=args.finetune_small_epochs,
-        encoder_dimension= model.encoder_dimension
+        encoder_dimension= model.encoder_dimension,
+        finetune_percentage=args.pretrain_finetune_percentage
     )
 
     checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=args.save_top_k_models, every_n_epochs=args.save_models_every_n_epoch,monitor="adaptation_acc_one_percent",
@@ -121,8 +120,9 @@ if args.action == 'evaluate':
         (storage_path/"train").resolve(), transform=transforms["linear_transform"])
     n_classes = len(linear_train_data.classes)
 
-    len_same_dist_val = 99 * len(linear_train_data) // 100
-    same_dist_val_dataset, linear_train_data = random_split(linear_train_data, [len_same_dist_val, len(linear_train_data) - len_same_dist_val])
+    len_same_dist_val = args.evaluation_same_dist_val_percentage * len(linear_train_data) // 100
+    len_train = args.evaluation_train_percentage * len(linear_train_data) // 100
+    same_dist_val_dataset, linear_train_data, _ = random_split(linear_train_data, [len_same_dist_val, len_train,len(linear_train_data) - len_same_dist_val - len_train])
 
     same_dist_val_dataloader = DataLoader(same_dist_val_dataset, args.finetune_batchsize, num_workers=16)
 
@@ -132,12 +132,7 @@ if args.action == 'evaluate':
     train_dataloader = DataLoader(linear_train_data,args.finetune_batchsize,num_workers=16,shuffle=True)
     other_dist_valid_dataloader = DataLoader(linear_validation_data,args.finetune_batchsize,num_workers=16)
 
-    # simclr = SimCLR(args.pretrain_batch_size, len(train_dataloader),
-    #     max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
-    #     keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
-    #     low_penalty_weight=args.low_penalty_weight)
-
-    simclr = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve())
+    simclr = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,warmup_epochs=0,num_samples=len(train_dataloader))
     simclr.train(False)
 
     model = Evaluator(simclr,n_classes=n_classes,n_hidden=args.evaluator_hidden_dim)

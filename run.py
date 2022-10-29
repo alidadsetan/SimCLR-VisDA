@@ -150,6 +150,6 @@ if args.action == 'evaluate':
 
         save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.finetune_epochs,
         # TODO: move this to argparse
-        log_every_n_steps=1)
+        log_every_n_steps=1, strategy='dp')
 
     trainer.fit(model, train_dataloader, other_dist_valid_dataloader) #, same_dist_val_dataloader])

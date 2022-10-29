@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
-import argparse
+import argparse, argcomplete
 from evaluator_module import Evaluator
 
 parser = argparse.ArgumentParser()
@@ -49,7 +49,7 @@ parser.add_argument("--num-gpus", type=int,default=1)
 parser.add_argument("--evaluation-same-dist-val-percentage", type=int,default=5)
 parser.add_argument("--evaluation-train-percentage", type=int,default=95)
 
-
+argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
 if args.action == "pretrain":

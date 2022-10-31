@@ -78,7 +78,7 @@ if args.action == "pretrain":
         (storage_path/"validation").resolve(), transform=transforms["linear_transform"])
 
     train_dataloader = DataLoader(
-        unsupervised_dataset, args.pretrain_batch_size, num_workers=16,shuffle=True)
+        unsupervised_dataset, args.pretrain_batch_size, num_workers=args.num_workers,shuffle=True)
 
     if args.pretrained_weights_path:
         model = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,warmup_epochs=0,num_samples=len(train_dataloader)*args.pretrain_batch_size,use_all_features=args.use_all_features)
@@ -98,7 +98,8 @@ if args.action == "pretrain":
         batch_size=args.finetune_batchsize,
         epochs=args.finetune_epochs,
         encoder_dimension= model.encoder_dimension,
-        finetune_percentage=args.pretrain_finetune_percentage
+        finetune_percentage=args.pretrain_finetune_percentage,
+        num_workers=args.num_workers
     )
 
     checkpoint = ModelCheckpoint(dirpath=args.checkpoint_directory, save_top_k=args.save_top_k_models, every_n_epochs=args.save_models_every_n_epoch,monitor="adaptation_acc_one_percent",
@@ -129,7 +130,7 @@ if args.action == 'evaluate':
     len_train = args.evaluation_train_percentage * len(linear_train_data) // 100
     same_dist_val_dataset, linear_train_data, _ = random_split(linear_train_data, [len_same_dist_val, len_train,len(linear_train_data) - len_same_dist_val - len_train])
 
-    same_dist_val_dataloader = DataLoader(same_dist_val_dataset, args.finetune_batchsize, num_workers=16)
+    same_dist_val_dataloader = DataLoader(same_dist_val_dataset, args.finetune_batchsize, num_workers=args.num_workers)
 
     linear_validation_data = ImageFolder(
         (storage_path/"validation").resolve(), transform=transforms["linear_transform"])

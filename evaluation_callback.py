@@ -40,7 +40,8 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         epochs=10,
         drop_p: float = 0.2,
         num_classes: Optional[int] = None,
-        finetune_percentage = 1
+        finetune_percentage = 1,
+        num_workers=16
     ):
         """
         Args:
@@ -69,7 +70,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         finetune_lentgh = finetune_percentage * len(train_dataset)//100
 
         self.train_loader = DataLoader(random_split(train_dataset, [finetune_lentgh, len(train_dataset) - finetune_lentgh])[0],
-                                                   batch_size=batch_size, shuffle=True, num_workers=16)
+                                                   batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
         self.encoder_dimension = encoder_dimension
 
@@ -77,7 +78,7 @@ class SSLOnlineEvaluator(Callback):  # pragma: no cover
         #     train_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
 
         self.validation_loader = DataLoader(
-            valid_dataset, batch_size=batch_size, shuffle=True, num_workers=16)
+            valid_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
     def on_train_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
         self.completed_epoches += 1

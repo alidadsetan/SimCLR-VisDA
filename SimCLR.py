@@ -66,7 +66,6 @@ class SimCLR(pl.LightningModule):
 
     @property
     def encoder_dimension(self):
-        print(self.encoder.feature_info.channels(), 'channels')
         # if self.hparams.keep_mlp:
             # return self.hparams.mlp_dimension
         if self.hparams.use_all_features:
@@ -136,8 +135,6 @@ class SimCLR(pl.LightningModule):
 
         result = self.encoder(x)
 
-        for i, x in enumerate(result):
-            print(x.shape, 'shape', i)
 
         if self.hparams.use_all_features:
             return torch.cat([torch.nn.functional.adaptive_avg_pool2d(layer,1).flatten(start_dim=1,end_dim=-1) for layer in result],dim=1)
@@ -169,8 +166,6 @@ class SimCLR(pl.LightningModule):
         h2 = self.encoder(img2)[-1]
         h1 = torch.nn.functional.adaptive_avg_pool2d(h1,1).flatten(start_dim=1,end_dim=-1) 
         h2 = torch.nn.functional.adaptive_avg_pool2d(h2,1).flatten(start_dim=1,end_dim=-1) 
-        print(h1.shape, 'h1.shape')
-        print(h2.shape, 'h2.shape')
         # if isinstance(h1,list):
             # h1 = h1[-1]
             # h2 = h2[-1]

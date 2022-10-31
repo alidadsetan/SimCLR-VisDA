@@ -136,6 +136,9 @@ class SimCLR(pl.LightningModule):
 
         result = self.encoder(x)
 
+        for i, x in enumerate(result):
+            print(x.shape, 'shape', i)
+
         if self.hparams.use_all_features:
             return torch.cat([torch.nn.functional.adaptive_avg_pool2d(layer,1).flatten(start_dim=1,end_dim=-1) for layer in result],dim=1)
         else:

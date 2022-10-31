@@ -28,7 +28,7 @@ parser.add_argument("--image-height", type=int, default=320)
 parser.add_argument("--pretrain-epochs", type=int, default=2000)
 parser.add_argument("--pretrain-learning-rate", type=float, default=1e-3)
 parser.add_argument("--pretrain-batch-size", type=int, default=256)
-parser.add_argument("--pretrain-finetune-precentage", type=int, default=1)
+parser.add_argument("--pretrain-finetune-percentage", type=int, default=1)
 parser.add_argument("--use-all-features", action="store_true", default=False)
 parser.add_argument("--model-name", type=str,default='efficientnetv2_rw_s')
 

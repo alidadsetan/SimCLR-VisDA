@@ -167,6 +167,9 @@ class SimCLR(pl.LightningModule):
         # (b, 3, 32, 32) -> (b, 2048)
         h1 = self.encoder(img1)[-1]
         h2 = self.encoder(img2)[-1]
+
+        print(h1.shape, 'h1.shape')
+        print(h2.shape, 'h2.shape')
         # if isinstance(h1,list):
             # h1 = h1[-1]
             # h2 = h2[-1]

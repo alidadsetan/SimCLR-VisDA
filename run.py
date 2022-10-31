@@ -46,6 +46,7 @@ parser.add_argument("--low-penalty-weight", type=float, default=.1)
 parser.add_argument("--pretrained-weights-path", type=str,required=False)
 parser.add_argument("--evaluator-hidden-dim", type=int,default=0)
 parser.add_argument("--num-gpus", type=int,default=1)
+parser.add_argument("--num-workers", type=int,default=16)
 
 
 parser.add_argument("--evaluation-same-dist-val-percentage", type=int,default=5)

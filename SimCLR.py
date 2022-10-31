@@ -2,9 +2,9 @@ import pytorch_lightning as pl
 import torch
 # from pl_bolts.models.self_supervised.resnets import resnet50_bn
 from torchvision.models import resnet50, ResNet50_Weights
+import timm
 from pl_bolts.optimizers.lars import LARS
 
-from torch.optim import Adam
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from torch import nn
 # from pl_bolts.models.self_supervised.evaluator import Flatten
@@ -35,7 +35,6 @@ class SimCLR(pl.LightningModule):
                  batch_size,
                  num_samples,
                 #  weight_path,
-                 keep_mlp,
                  high_penalty_weight,
                  low_penalty_weight,
                  mlp_dimension=2048,
@@ -43,6 +42,8 @@ class SimCLR(pl.LightningModule):
                  lr=1e-4,
                  opt_weight_decay=1e-6,
                  loss_temperature=0.5,
+                 use_all_features=True,
+                 model_name='efficientnetv2_rw_s',
                  **kwargs):
         """
         Args:
@@ -56,20 +57,22 @@ class SimCLR(pl.LightningModule):
         print(warmup_epochs, num_samples,"simclr")
         super().__init__()
         self.save_hyperparameters()
-        self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
-        self.encoder.fc = nn.Sequential()
+        # self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
+        # self.encoder.fc = nn.Sequential()
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
+        self.encoder = timm.create_model(model_name,features_only=True,pretrained=True)
 
         # h -> || -> z
-        self.projection = Projection(output_dim=mlp_dimension)
+        self.projection = Projection(input_dim=self.encoder.feture_info.channels()[-1],output_dim=mlp_dimension)
 
     @property
     def encoder_dimension(self):
-        if self.hparams.keep_mlp:
-            return self.hparams.mlp_dimension
+        # if self.hparams.keep_mlp:
+            # return self.hparams.mlp_dimension
+        if self.hparams.use_all_features:
+            return sum(self.encoder.feture_info.channels())
         else:
-            # return self.encoder.avgpool.output_size
-            return 2048
+            return self.encoder.feture_info.channels()[-1]
 
     def exclude_from_wt_decay(self, named_params, weight_decay, skip_list=['bias', 'bn']):
         params = []
@@ -133,25 +136,24 @@ class SimCLR(pl.LightningModule):
 
         result = self.encoder(x)
 
+        if self.hparams.use_all_features:
+            return torch.cat([torch.nn.functional.adaptive_avg_pool2d(layer,1).flatten(start_dim=1,end_dim=-1) for layer in result],dim=1)
+        else:
+            return torch.nn.functional.adaptive_avg_pool2d(result[-1],1).flatten(start_dim=1,end_dim=-1)
+
         # added for testing
-        if self.hparams.keep_mlp:
-            result = self.projection(result)
+        # if self.hparams.keep_mlp:
+            # result = self.projection(result[-1])
         # if isinstance(result, list):
         #     result = result[-1]
-        return result
+
+        # return result
 
     def training_step(self, batch, batch_idx):
         loss = self.shared_step(batch, batch_idx)
 
         # result = pl.TrainResult(minimize=loss)
         self.log('train_loss', loss, on_epoch=True, sync_dist=True)
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        loss = self.shared_step(batch, batch_idx)
-
-        # result = pl.EvalResult(checkpoint_on=loss)
-        self.log('avg_val_loss', loss, sync_dist=True)
         return loss
 
     def shared_step(self, batch, batch_idx):

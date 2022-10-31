@@ -24,11 +24,14 @@ parser.add_argument("--checkpoint-directory",
                     default=str((Path(".")/"checkpoints").resolve()))
 parser.add_argument("--finetune-every-n-epoch",
                     type=int, default=1)
-parser.add_argument("--image-height", type=int, default=224)
+parser.add_argument("--image-height", type=int, default=320)
 parser.add_argument("--pretrain-epochs", type=int, default=2000)
-parser.add_argument("--pretrain-learning-rate", type=float, default=1e-4)
+parser.add_argument("--pretrain-learning-rate", type=float, default=1e-3)
 parser.add_argument("--pretrain-batch-size", type=int, default=256)
 parser.add_argument("--pretrain-finetune-precentage", type=int, default=1)
+parser.add_argument("--use-all-features", action="store_true", default=False)
+parser.add_argument("--model-name", type=str,default='efficientnetv2_rw_s')
+
 parser.add_argument("--log-directory", type=str,
                     default=(Path('.')/"logs").resolve())
 parser.add_argument("--finetune-batchsize", type=int, default=256)
@@ -37,7 +40,6 @@ parser.add_argument("--finetune-percentage", type=int, default=1)
 parser.add_argument("--save-top-k-models", type=int, default=10)
 parser.add_argument("--save-models-every-n-epoch", type=int, default=1)
 
-parser.add_argument("--keep-mlp", action="store_true", default=False)
 parser.add_argument("--mlp-output-dimension", type=int, default=128)
 parser.add_argument("--high-penalty-weight", type=float, default=10)
 parser.add_argument("--low-penalty-weight", type=float, default=.1)
@@ -79,12 +81,14 @@ if args.action == "pretrain":
         unsupervised_dataset, args.pretrain_batch_size, num_workers=16,shuffle=True)
 
     if args.pretrained_weights_path:
-        model = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,warmup_epochs=0,num_samples=len(train_dataloader)*args.pretrain_batch_size)
+        model = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,warmup_epochs=0,num_samples=len(train_dataloader)*args.pretrain_batch_size,use_all_features=args.use_all_features)
     else:
         model = SimCLR(args.pretrain_batch_size, len(train_dataloader)*args.pretrain_batch_size,
             lr=args.pretrain_learning_rate,
             keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
-            low_penalty_weight=args.low_penalty_weight)
+            low_penalty_weight=args.low_penalty_weight,
+            use_all_features=args.use_all_features,
+            model_name=args.model_name)
 
     linear_seperablity_metric = SSLOnlineEvaluator(
         train_dataset=linear_train_data,
@@ -133,7 +137,7 @@ if args.action == 'evaluate':
     train_dataloader = DataLoader(linear_train_data,args.finetune_batchsize,num_workers=16,shuffle=True)
     other_dist_valid_dataloader = DataLoader(linear_validation_data,args.finetune_batchsize,num_workers=16)
 
-    simclr = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,warmup_epochs=0,num_samples=len(train_dataloader))
+    simclr = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,warmup_epochs=0,num_samples=len(train_dataloader),use_all_features=args.use_all_features)
     simclr.train(False)
 
     model = Evaluator(simclr,n_classes=n_classes,n_hidden=args.evaluator_hidden_dim,drop_p=args.drop_p)

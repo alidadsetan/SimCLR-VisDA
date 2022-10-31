@@ -85,7 +85,7 @@ if args.action == "pretrain":
     else:
         model = SimCLR(args.pretrain_batch_size, len(train_dataloader)*args.pretrain_batch_size,
             lr=args.pretrain_learning_rate,
-            keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
+            high_penalty_weight=args.high_penalty_weight,
             low_penalty_weight=args.low_penalty_weight,
             use_all_features=args.use_all_features,
             model_name=args.model_name)

@@ -91,6 +91,8 @@ if args.action == "pretrain":
             use_all_features=args.use_all_features,
             model_name=args.model_name)
 
+    print(model.encoder_dimension)
+
     linear_seperablity_metric = SSLOnlineEvaluator(
         train_dataset=linear_train_data,
         valid_dataset=linear_validation_data,

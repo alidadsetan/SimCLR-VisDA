@@ -63,16 +63,16 @@ class SimCLR(pl.LightningModule):
         self.encoder = timm.create_model(model_name,features_only=True,pretrained=True)
 
         # h -> || -> z
-        self.projection = Projection(input_dim=self.encoder.feture_info.channels()[-1],output_dim=mlp_dimension)
+        self.projection = Projection(input_dim=self.encoder.feature_info.channels()[-1],output_dim=mlp_dimension)
 
     @property
     def encoder_dimension(self):
         # if self.hparams.keep_mlp:
             # return self.hparams.mlp_dimension
         if self.hparams.use_all_features:
-            return sum(self.encoder.feture_info.channels())
+            return sum(self.encoder.feature_info.channels())
         else:
-            return self.encoder.feture_info.channels()[-1]
+            return self.encoder.feature_info.channels()[-1]
 
     def exclude_from_wt_decay(self, named_params, weight_decay, skip_list=['bias', 'bn']):
         params = []

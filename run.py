@@ -91,7 +91,6 @@ if args.action == "pretrain":
             use_all_features=args.use_all_features,
             model_name=args.model_name)
 
-    print(model.encoder_dimension, 'encoder dimension')
 
     linear_seperablity_metric = SSLOnlineEvaluator(
         train_dataset=linear_train_data,
@@ -115,7 +114,7 @@ if args.action == "pretrain":
 
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     wandb_logger_path = Path(args.log_directory)/'wandb'
-    trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=args.num_gpus, strategy='dp',logger=[TensorBoardLogger(
+    trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=args.num_gpus, strategy='ddp',logger=[TensorBoardLogger(
         save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")]
         , max_epochs=args.pretrain_epochs, log_every_n_steps=10)
     trainer.fit(model, train_dataloaders=train_dataloader)

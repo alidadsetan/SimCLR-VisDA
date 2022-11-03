@@ -116,9 +116,10 @@ if __name__ == '__main__':
 
         tensor_logger_path = Path(args.log_directory)/'tensorboard'
         wandb_logger_path = Path(args.log_directory)/'wandb'
-        trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=args.num_gpus, strategy='ddp',logger=[TensorBoardLogger(
+        trainer = pl.Trainer(callbacks=callbacks,logger=[TensorBoardLogger(
             save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")]
-            , max_epochs=args.pretrain_epochs, log_every_n_steps=10)
+            , max_epochs=args.pretrain_epochs, log_every_n_steps=10, strategy='horovod'#,accelerator="gpu", devices=args.num_gpus
+            )
         trainer.fit(model, train_dataloaders=train_dataloader)
         # callbacks: save model (weights and biases?). linear seperablity metric. progress bar (weights and biases?).
     if args.action == 'evaluate':

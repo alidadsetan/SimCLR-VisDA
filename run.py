@@ -86,7 +86,8 @@ if __name__ == '__main__':
         if args.pretrained_weights_path:
             model = SimCLR.load_from_checkpoint(Path(args.pretrained_weights_path).resolve(),batch_size=args.pretrain_batch_size,warmup_epochs=0,num_samples=len(train_dataloader)*args.pretrain_batch_size,use_all_features=args.use_all_features)
         else:
-            model = SimCLR(args.pretrain_batch_size, len(train_dataloader)*args.pretrain_batch_size,
+            model = SimCLR(args.pretrain_batch_size, len(train_dataloader),#*args.pretrain_batch_size,
+                max_epochs=100,
                 lr=args.pretrain_learning_rate,
                 high_penalty_weight=args.high_penalty_weight,
                 low_penalty_weight=args.low_penalty_weight,

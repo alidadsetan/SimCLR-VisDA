@@ -193,9 +193,9 @@ class SimCLR(pl.LightningModule):
         # h2 = torch.flatten(h2,1)
         # h1 = torch.nn.functional.adaptive_avg_pool2d(h1,1).flatten(start_dim=1,end_dim=-1) 
         # h2 = torch.nn.functional.adaptive_avg_pool2d(h2,1).flatten(start_dim=1,end_dim=-1) 
-        # if isinstance(h1,list):
-            # h1 = h1[-1]
-            # h2 = h2[-1]
+        if isinstance(h1,list):
+            h1 = h1[-1]
+            h2 = h2[-1]
 
         # PROJECT
         # img -> E -> h -> || -> z

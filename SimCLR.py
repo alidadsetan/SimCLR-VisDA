@@ -71,7 +71,7 @@ class SimCLR(pl.LightningModule):
     def encoder_dimension(self):
         # if self.hparams.keep_mlp:
             # return self.hparams.mlp_dimension
-        return 2024
+        return 2048
         if self.hparams.use_all_features:
             return sum(self.encoder.feature_info.channels())
         else:

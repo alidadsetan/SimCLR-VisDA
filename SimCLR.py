@@ -150,14 +150,26 @@ class SimCLR(pl.LightningModule):
         # return result
 
     def training_step(self, batch, batch_idx):
-        loss = self.shared_step(batch, batch_idx)
+        z1,z2,labels = self.shared_step(batch, batch_idx)
 
         # result = pl.TrainResult(minimize=loss)
-        self.log('train_loss', loss, on_epoch=True, sync_dist=True)
+        # self.log('train_loss', loss, on_epoch=True, sync_dist=True)
+        return z1,z2,labels
+    
+    def training_step_end(self, batch_parts):
+        z1s = []
+        z2s = []
+        labels_list = []
+        for z1, z2, labels in batch_parts:
+            z1s.append(z1)
+            z2s.append(z2),
+            labels_list.append(labels)
+        loss = self.nt_xent_loss(torch.concat(z1s,dim=0), torch.concat(z2s,dim=0) ,self.hparams.loss_temperature, labels=torch.concat(labels,dim=0))
         return loss
+        
 
-    def shared_step(self, batch, batch_idx):
-        (img1, img2), (labels,_) = batch
+    def shared_step(self, batch_part, batch_idx):
+        (img1, img2), (labels,_) = batch_part
 
         # ENCODE
         # encode -> representations
@@ -176,9 +188,8 @@ class SimCLR(pl.LightningModule):
         z1 = self.projection(h1)
         z2 = self.projection(h2)
 
-        loss = self.nt_xent_loss(z1, z2 ,self.hparams.loss_temperature, labels=labels)
 
-        return loss
+        return z1,z2, labels
 
     def compute_neg_weights(self,labels):
         column_labels = labels.expand((len(labels)), -1)

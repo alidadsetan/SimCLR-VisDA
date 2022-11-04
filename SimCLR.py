@@ -56,10 +56,10 @@ class SimCLR(pl.LightningModule):
         """
         super().__init__()
         self.save_hyperparameters()
-        # self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
-        # self.encoder.fc = nn.Sequential()
+        self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.encoder.fc = nn.Sequential()
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
-        self.encoder = timm.create_model(model_name,pretrained=True, num_classes=0)
+        # self.encoder = timm.create_model(model_name,pretrained=True, num_classes=0)
 
         # self.avgpool = nn.AdaptiveAvgPool2d((1,1))
 

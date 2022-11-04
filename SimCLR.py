@@ -61,7 +61,7 @@ class SimCLR(pl.LightningModule):
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
         self.encoder = timm.create_model(model_name,pretrained=True, num_classes=0)
 
-        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
+        # self.avgpool = nn.AdaptiveAvgPool2d((1,1))
 
         # h -> || -> z
         self.projection = Projection(input_dim=self.encoder.feature_info.channels()[-1],output_dim=mlp_dimension)
@@ -70,6 +70,7 @@ class SimCLR(pl.LightningModule):
     def encoder_dimension(self):
         # if self.hparams.keep_mlp:
             # return self.hparams.mlp_dimension
+        return 2024
         if self.hparams.use_all_features:
             return sum(self.encoder.feature_info.channels())
         else:

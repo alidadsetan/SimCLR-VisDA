@@ -61,6 +61,8 @@ class SimCLR(pl.LightningModule):
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
         self.encoder = timm.create_model(model_name,features_only=True,pretrained=True)
 
+        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
+
         # h -> || -> z
         self.projection = Projection(input_dim=self.encoder.feature_info.channels()[-1],output_dim=mlp_dimension)
 
@@ -137,9 +139,14 @@ class SimCLR(pl.LightningModule):
 
 
         if self.hparams.use_all_features:
+            raise Exception("not corrected yet!")
             return torch.cat([torch.nn.functional.adaptive_avg_pool2d(layer,1).flatten(start_dim=1,end_dim=-1) for layer in result],dim=1)
         else:
-            return torch.nn.functional.adaptive_avg_pool2d(result[-1],1).flatten(start_dim=1,end_dim=-1)
+            # return torch.nn.functional.adaptive_avg_pool2d(result[-1],1).flatten(start_dim=1,end_dim=-1)
+            result = self.avgpool(result[-1])
+            result = torch.flatten(result, 1)
+            return result
+
 
         # added for testing
         # if self.hparams.keep_mlp:
@@ -171,9 +178,14 @@ class SimCLR(pl.LightningModule):
         # encode -> representations
         # (b, 3, 32, 32) -> (b, 2048)
         h1 = self.encoder(img1)[-1]
+        h1 = self.avgpool(h1)
+        h1 = torch.flatten(h1,1)
+
         h2 = self.encoder(img2)[-1]
-        h1 = torch.nn.functional.adaptive_avg_pool2d(h1,1).flatten(start_dim=1,end_dim=-1) 
-        h2 = torch.nn.functional.adaptive_avg_pool2d(h2,1).flatten(start_dim=1,end_dim=-1) 
+        h2 = self.avgpool(h2)
+        h2 = torch.flatten(h2,1)
+        # h1 = torch.nn.functional.adaptive_avg_pool2d(h1,1).flatten(start_dim=1,end_dim=-1) 
+        # h2 = torch.nn.functional.adaptive_avg_pool2d(h2,1).flatten(start_dim=1,end_dim=-1) 
         # if isinstance(h1,list):
             # h1 = h1[-1]
             # h2 = h2[-1]

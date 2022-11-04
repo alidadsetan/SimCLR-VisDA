@@ -149,26 +149,22 @@ class SimCLR(pl.LightningModule):
 
         # return result
 
-    def training_step(self, batch, batch_idx):
-        z1,z2,labels = self.shared_step(batch, batch_idx)
+    def training_step(self, batch):
+        z1,z2,labels = self.shared_step(batch)
 
         # result = pl.TrainResult(minimize=loss)
         # self.log('train_loss', loss, on_epoch=True, sync_dist=True)
         return z1,z2,labels
     
     def training_step_end(self, batch_parts):
-        z1s = []
-        z2s = []
-        labels_list = []
-        for z1, z2, labels in batch_parts:
-            z1s.append(z1)
-            z2s.append(z2),
-            labels_list.append(labels)
-        loss = self.nt_xent_loss(torch.concat(z1s,dim=0), torch.concat(z2s,dim=0) ,self.hparams.loss_temperature, labels=torch.concat(labels,dim=0))
+        z1,z2,labels = batch_parts
+        loss = self.nt_xent_loss(z1, z2 ,self.hparams.loss_temperature, labels=labels)
+
+        self.log('train_loss', loss, on_epoch=True)
         return loss
         
 
-    def shared_step(self, batch_part, batch_idx):
+    def shared_step(self, batch_part):
         (img1, img2), (labels,_) = batch_part
 
         # ENCODE

@@ -166,10 +166,8 @@ class SimCLR(pl.LightningModule):
         # ENCODE
         # encode -> representations
         # (b, 3, 32, 32) -> (b, 2048)
-        print(img1.size())
         h1 = self.encoder(img1)
         h2 = self.encoder(img2)
-        print(h1.size(), h2.size(), 'shapes')
         # if isinstance(h1,list):
         #     h1 = h1[-1]
         #     h2 = h2[-1]

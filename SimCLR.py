@@ -10,6 +10,7 @@ from torch import nn
 # from pl_bolts.models.self_supervised.evaluator import Flatten
 # from pl_bolts.models.self_supervised import SimCLR as bolts_simclr
 from torch.nn import functional as F
+import timm
 
 
 class Projection(nn.Module):
@@ -43,6 +44,7 @@ class SimCLR(pl.LightningModule):
                  lr=1e-4,
                  opt_weight_decay=1e-6,
                  loss_temperature=0.5,
+                 model_name='tv_resnet50',
                  **kwargs):
         """
         Args:
@@ -55,8 +57,9 @@ class SimCLR(pl.LightningModule):
         """
         super().__init__()
         self.save_hyperparameters()
-        self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
-        self.encoder.fc = nn.Sequential()
+        # self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
+        # self.encoder.fc = nn.Sequential()
+        self.encoder = timm.create_model(model_name,pretrained=True,features_only=True)
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
         # self.encoder.eval()
 
@@ -66,11 +69,13 @@ class SimCLR(pl.LightningModule):
 
     @property
     def encoder_dimension(self):
-        if self.hparams.keep_mlp:
-            return self.hparams.mlp_dimension
-        else:
-            # return self.encoder.avgpool.output_size
-            return 2048
+        # TODO: change this
+        return 2048
+        # if self.hparams.keep_mlp:
+        #     return self.hparams.mlp_dimension
+        # else:
+        #     # return self.encoder.avgpool.output_size
+        #     return 2048
 
     def exclude_from_wt_decay(self, named_params, weight_decay, skip_list=['bias', 'bn']):
         params = []
@@ -132,11 +137,11 @@ class SimCLR(pl.LightningModule):
         # if isinstance(x, list):
         #     x = x[0]
 
-        result = self.encoder(x)
+        result = self.encoder.forward_features(x)
 
         # added for testing
-        if self.hparams.keep_mlp:
-            result = self.projection(result)
+        # if self.hparams.keep_mlp:
+        #     result = self.projection(result)
         # if isinstance(result, list):
         #     result = result[-1]
         return result
@@ -161,11 +166,11 @@ class SimCLR(pl.LightningModule):
         # ENCODE
         # encode -> representations
         # (b, 3, 32, 32) -> (b, 2048)
-        h1 = self.encoder(img1)
-        h2 = self.encoder(img2)
-        if isinstance(h1,list):
-            h1 = h1[-1]
-            h2 = h2[-1]
+        h1 = self.encoder.forward_features(img1)
+        h2 = self.encoder.forward_features(img2)
+        # if isinstance(h1,list):
+        #     h1 = h1[-1]
+        #     h2 = h2[-1]
 
         # PROJECT
         # img -> E -> h -> || -> z

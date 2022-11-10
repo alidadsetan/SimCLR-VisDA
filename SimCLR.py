@@ -59,7 +59,7 @@ class SimCLR(pl.LightningModule):
         self.save_hyperparameters()
         # self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
         # self.encoder.fc = nn.Sequential()
-        self.encoder = timm.create_model(model_name,pretrained=True,features_only=True)
+        self.encoder = timm.create_model(model_name,pretrained=True)#,features_only=True)
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
         # self.encoder.eval()
 

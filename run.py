@@ -11,7 +11,6 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 
-
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -28,6 +27,7 @@ parser.add_argument("--finetune-ten-percent-every-n-epoch",
 parser.add_argument("--image-height", type=int, default=96)
 parser.add_argument("--pretrain-epochs", type=int, default=100)
 parser.add_argument("--pretrain-learning-rate", type=float, default=1e-4)
+parser.add_argument("--model-name", type=str, default="tv_resnet50")
 parser.add_argument("--pretrain-batch-size", type=int, default=256)
 parser.add_argument("--log-directory", type=str,
                     default=(Path('.')/"logs").resolve())
@@ -39,6 +39,7 @@ parser.add_argument("--save-top-k-models", type=int, default=10)
 parser.add_argument("--save-models-every-n-epoch", type=int, default=1)
 
 parser.add_argument("--keep-mlp", action="store_true", default=False)
+parser.add_argument("--use-all-features", action="store_true", default=False)
 parser.add_argument("--mlp-output-dimension", type=int, default=128)
 parser.add_argument("--high-penalty-weight", type=float, default=10)
 parser.add_argument("--low-penalty-weight", type=float, default=.1)
@@ -76,6 +77,8 @@ if args.action == "pretrain":
     model = SimCLR(args.pretrain_batch_size, len(train_dataloader),
     max_epochs=args.pretrain_epochs,lr=args.pretrain_learning_rate,
     keep_mlp=args.keep_mlp,high_penalty_weight=args.high_penalty_weight,
+    model_name=args.model_name,
+    use_all_features=args.use_all_features,
     low_penalty_weight=args.low_penalty_weight)
 
     linear_seperablity_metric = SSLOnlineEvaluator(

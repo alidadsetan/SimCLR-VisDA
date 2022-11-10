@@ -44,6 +44,7 @@ class SimCLR(pl.LightningModule):
                  lr=1e-4,
                  opt_weight_decay=1e-6,
                  loss_temperature=0.5,
+                 use_all_features=False,
                  model_name='tv_resnet50',
                  **kwargs):
         """
@@ -59,7 +60,10 @@ class SimCLR(pl.LightningModule):
         self.save_hyperparameters()
         # self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
         # self.encoder.fc = nn.Sequential()
-        self.encoder = timm.create_model(model_name,pretrained=True,num_classes=0)#,features_only=True)
+        self.encoder = timm.create_model(model_name,pretrained=True,features_only=True)
+        self.pooling = [nn.AdaptiveAvgPool2d((1,1)) for _ in self.encoder.feature_info.channels()]
+
+        # self.encoder.train(True)
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
         # self.encoder.eval()
 
@@ -69,8 +73,10 @@ class SimCLR(pl.LightningModule):
 
     @property
     def encoder_dimension(self):
-        # TODO: change this
-        return 2048
+        if self.hparams.use_all_features:
+            return sum(self.encoder.feature_info.channels())
+        else:
+            return self.encoder.feature_info.channels()[-1]
         # if self.hparams.keep_mlp:
         #     return self.hparams.mlp_dimension
         # else:
@@ -139,6 +145,10 @@ class SimCLR(pl.LightningModule):
 
         result = self.encoder(x)
 
+        if self.hparams.use_all_features:
+            return torch.cat([torch.flatten(self.pooling[i](result[i]),1) for i in range(len(result))],dim=1)
+        else:
+            return torch.flatten(self.pooling[-1](result[-1]),1) 
         # added for testing
         # if self.hparams.keep_mlp:
         #     result = self.projection(result)
@@ -153,21 +163,14 @@ class SimCLR(pl.LightningModule):
         self.log('train_loss', loss, on_epoch=True)
         return loss
 
-    def validation_step(self, batch, batch_idx):
-        loss = self.shared_step(batch, batch_idx)
-
-        # result = pl.EvalResult(checkpoint_on=loss)
-        self.log('avg_val_loss', loss)
-        return loss
-
     def shared_step(self, batch, batch_idx):
         (img1, img2), (labels,_) = batch
 
         # ENCODE
         # encode -> representations
         # (b, 3, 32, 32) -> (b, 2048)
-        h1 = self.encoder(img1)
-        h2 = self.encoder(img2)
+        h1 = torch.flatten(self.pooling[-1](self.encoder(img1)[-1]),1)
+        h2 = torch.flatten(self.pooling[-1](self.encoder(img2)[-1]),1)
         # if isinstance(h1,list):
         #     h1 = h1[-1]
         #     h2 = h2[-1]

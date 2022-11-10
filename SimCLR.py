@@ -59,7 +59,7 @@ class SimCLR(pl.LightningModule):
         self.save_hyperparameters()
         # self.encoder = resnet50(weights=ResNet50_Weights.DEFAULT)
         # self.encoder.fc = nn.Sequential()
-        self.encoder = timm.create_model(model_name,pretrained=True)#,features_only=True)
+        self.encoder = timm.create_model(model_name,pretrained=True,num_classes=0)#,features_only=True)
         # self.encoder = bolts_simclr.load_from_checkpoint(weight_path,strict=False).encoder
         # self.encoder.eval()
 
@@ -137,7 +137,7 @@ class SimCLR(pl.LightningModule):
         # if isinstance(x, list):
         #     x = x[0]
 
-        result = self.encoder.forward_features(x)
+        result = self.encoder(x)
 
         # added for testing
         # if self.hparams.keep_mlp:
@@ -167,8 +167,8 @@ class SimCLR(pl.LightningModule):
         # encode -> representations
         # (b, 3, 32, 32) -> (b, 2048)
         print(img1.size())
-        h1 = self.encoder.forward_features(img1)
-        h2 = self.encoder.forward_features(img2)
+        h1 = self.encoder(img1)
+        h2 = self.encoder(img2)
         print(h1.size(), h2.size(), 'shapes')
         # if isinstance(h1,list):
         #     h1 = h1[-1]

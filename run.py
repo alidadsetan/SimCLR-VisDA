@@ -47,6 +47,8 @@ parser.add_argument("--low-penalty-weight", type=float, default=.1)
 
 args = parser.parse_args()
 
+pl.seed_everything(42)
+
 if args.action == "pretrain":
     storage_path = Path(args.storage)
 

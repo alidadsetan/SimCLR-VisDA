@@ -69,7 +69,7 @@ class SimCLR(pl.LightningModule):
 
 
         # h -> || -> z
-        self.projection = Projection(output_dim=mlp_dimension)
+        self.projection = Projection(input_dim=self.encoder.feature_info.channels()[-1],output_dim=mlp_dimension)
 
     @property
     def encoder_dimension(self):

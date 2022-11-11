@@ -19,7 +19,8 @@ class RandomColorize(object):
 def transform_builder(input_height):
     return ({
         "linear_transform": transforms.Compose([
-            transforms.Resize((input_height,input_height)),
+            # transforms.Resize((input_height,input_height)),
+            transforms.RandomResizedCrop(size=input_height,scale=(.25,.5)),
             transforms.ToTensor(),
             transforms.Normalize((0.5,), (0.5,))
         ]),

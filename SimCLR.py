@@ -149,14 +149,12 @@ class SimCLR(pl.LightningModule):
         
     def training_step_end(self,outputs):
         z1,z2,labels = outputs
-        print(labels.size(), 'training step end')
         loss = self.nt_xent_loss(z1,z2, self.hparams.loss_temperature,labels=labels)
         self.log('train_loss', loss, on_epoch=True)
         return loss
 
     def training_step(self, batch, batch_idx):
         z1,z2,labels = self.shared_step(batch, batch_idx)
-        print(labels.size(), 'training step')
         return z1,z2,labels
 
     def shared_step(self, batch, batch_idx):

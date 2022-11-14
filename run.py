@@ -119,7 +119,8 @@ if __name__ == '__main__':
         wandb_logger_path = Path(args.log_directory)/'wandb'
         trainer = pl.Trainer(callbacks=callbacks,logger=[TensorBoardLogger(
             save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")],
-            max_epochs=args.pretrain_epochs, log_every_n_steps=10, #strategy='dp',
+            max_epochs=100,
+            log_every_n_steps=10, #strategy='dp',
             accelerator="gpu", devices=args.num_gpus,
             track_grad_norm=2
             )

@@ -140,28 +140,24 @@ class SimCLR(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def forward(self, x):
-        # if isinstance(x, list):
-        #     x = x[0]
-
         result = self.encoder(x)
 
         if self.hparams.use_all_features:
             return torch.cat([torch.flatten(self.pooling[i](result[i]),1) for i in range(len(result))],dim=1)
         else:
             return torch.flatten(self.pooling[-1](result[-1]),1) 
-        # added for testing
-        # if self.hparams.keep_mlp:
-        #     result = self.projection(result)
-        # if isinstance(result, list):
-        #     result = result[-1]
-        return result
-
-    def training_step(self, batch, batch_idx):
-        loss = self.shared_step(batch, batch_idx)
-
-        # result = pl.TrainResult(minimize=loss)
+        
+    def training_step_end(self,outputs):
+        z1,z2,labels = outputs
+        print(labels.size(), 'training step end')
+        loss = self.nt_xent_loss(z1,z2, self.hparams.loss_temperature,labels=labels)
         self.log('train_loss', loss, on_epoch=True)
         return loss
+
+    def training_step(self, batch, batch_idx):
+        z1,z2,labels = self.shared_step(batch, batch_idx)
+        print(labels.size(), 'training step')
+        return z1,z2,labels
 
     def shared_step(self, batch, batch_idx):
         (img1, img2), (labels,_) = batch
@@ -181,9 +177,7 @@ class SimCLR(pl.LightningModule):
         z1 = self.projection(h1)
         z2 = self.projection(h2)
 
-        loss = self.nt_xent_loss(z1, z2 ,self.hparams.loss_temperature, labels=labels)
-
-        return loss
+        return z1, z2, labels
 
     def compute_neg_weights(self,labels):
         column_labels = labels.expand((len(labels)), -1)

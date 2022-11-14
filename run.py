@@ -30,6 +30,7 @@ parser.add_argument("--pretrain-learning-rate", type=float, default=1e-4)
 parser.add_argument("--model-name", type=str, default="tv_resnet50")
 parser.add_argument("--pretrain-batch-size", type=int, default=256)
 parser.add_argument("--devices", type=int, nargs='+',default=[0])
+parser.add_argument("--strategy", type=str, default='dp')
 parser.add_argument("--log-directory", type=str,
                     default=(Path('.')/"logs").resolve())
 parser.add_argument("--finetune-small-epochs", type=int, default=10)
@@ -105,7 +106,7 @@ if args.action == "pretrain":
 
     tensor_logger_path = Path(args.log_directory)/'tensorboard'
     wandb_logger_path = Path(args.log_directory)/'wandb'
-    trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=args.devices,  logger=[TensorBoardLogger(
+    trainer = pl.Trainer(callbacks=callbacks, accelerator="gpu", devices=args.devices,  strategy=args.strategy,logger=[TensorBoardLogger(
         save_dir=tensor_logger_path), WandbLogger(save_dir=wandb_logger_path, project="SimCLR-VisDA")], max_epochs=args.pretrain_epochs)
     trainer.fit(model, train_dataloaders=train_dataloader)
     # callbacks: save model (weights and biases?). linear seperablity metric. progress bar (weights and biases?).
